@@ -18,12 +18,12 @@ część CD - gdy faza CI zakończy się powodzeniem github actions loguje się 
 > Aplikacja będzie szyfrowała dane użytkowników oraz będzie działała na stronie https
 
 **(DB)Wdrążenie w postaci maszyny wirtualnej lub kontenera Dockera**
->
+> Do wdrażania wirtualnmych maszyn będziemy korzystać z Terraform
 
 **(DB+)Wdrążenie w architekturze mikrousług (min dwie komunikujące się ze sobą maszyny wirtualne lub kontenery dokera)**
->
+> Postawionę będą 2 maszyny wirtualne które będą wspólnie na jednej sieci wirtualnej co pozwoli im na efektywną komunikację między sobą
 
 **(BDB)Wdrążenie uzupełnione o testy jednostkowe,e2e**
->
+> testy jednostkowe Rest API będą prowadzone przy użyciu narzędzia Postman
 
 

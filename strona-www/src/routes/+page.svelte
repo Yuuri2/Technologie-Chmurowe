@@ -7,8 +7,7 @@
 </section>
 
 <style>
-html{
-    background-color: skyblue;
-}
-
+    :global(body){
+        background-color: skyblue;
+    }
 </style>

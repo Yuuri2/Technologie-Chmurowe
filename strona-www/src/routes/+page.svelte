@@ -7,6 +7,7 @@
 
     let savedName = "admin";
     let savedPswd = "2137";
+
     function Register(){
         currentPage = 'register';
     }
@@ -19,6 +20,20 @@
         password = '';
         passwordCheck = '';
     }
+    function loadProducts(){
+        currentPage = 'productList';
+    }
+
+    function addProduct(){
+
+    }
+    function deleteProduct(){
+
+    }
+    function editProduct(){
+
+    }
+
 
     function RegistrationValidation(){
         if (password === '' || passwordCheck === '') {
@@ -38,8 +53,10 @@
     }
 
     function handleLogIn(){
+        //Sprawdzanie w bazie
         if(username == savedName && password == savedPswd){
             alert("Welcome back!");
+            loadProducts();
         }
         else{
             alert("Niepoprawne dane");
@@ -78,10 +95,25 @@
         <div id="SignInBtnContainer">
             <b>Username: </b><input class="UIInput" type="text" name="Name" bind:value={username}/>
             <b>Password: </b><input class="UIInput" type="password" name="Password" bind:value={password}/>
-            <button class="UIButton SubmitBtn" onclick={handleLogIn}>Submit</button>
+            <button class="UIButton SubmitBtn" onclick={loadProducts}>Submit</button>
             <button class="UIButton" onclick={GoHome}>← Go back</button>
         </div>
 
+        {:else if currentPage === 'productList'}
+        <div id="settingsPanel">
+            <h4 style="width: 50%; float: left; margin-left: 5%;">User</h4>
+            <button style="float: right;" class="UIButton ButtonProductPage" onclick={GoHome}>Log out</button>
+        </div>
+        <div id="userPanel">
+            <div id="controllPanel">
+                <button class="UIButton ButtonProductPage" style="background-color: #73AD21;"><b>+</b></button>
+                <button class="UIButton ButtonProductPage" style="background-color: red;"><b>X</b></button>
+                <button class="UIButton ButtonProductPage" style="background-color: yellow;">Edit</button>
+            </div>
+            <div id="productPanel">
+
+            </div>
+        </div>
         {/if}
     </div>
 </div>
@@ -124,6 +156,37 @@
     align-items: center;
 }
 
+#settingsPanel{
+    width: 100%;
+    height: 10%;
+
+}
+
+#userPanel{
+    width: 100%;
+    height: 90%;
+    border-radius: 25px;
+    border: 2px solid black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#controllPanel{
+    width: 100%;
+    height: 10%;
+    display: flex;
+    justify-content: center;
+}
+
+#productPanel{
+    width: 100%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .UIButton{
     width: 30%;
     height: 10%;
@@ -138,6 +201,11 @@
     background-color: #73AD21;
     color: white;
     border: none;
+}
+
+.ButtonProductPage{
+    height: 60%;
+    width: 15%;
 }
 .UIButton:hover{
     transform: scale(1.1);

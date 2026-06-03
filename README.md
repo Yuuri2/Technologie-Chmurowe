@@ -1,11 +1,19 @@
-# Technologie-Chmurowe
+
+# Technologie-Chmurowe 26L
 #### Projekt aplikacji wdrążonej na Microsoft Azure
 
 **Członkowie zespołu:**
 *Adrian Torbus*
 *Dawid Pytel*
 
-Projekt zakłada stworzenie działającej w chmurze aplikacji typu lista zakupów. Aplikacja zakłada następujące funkcjonalności:  logowanie się na konto używtkownika lub stworzenie nowego, tworzenie i usuwanie list zakupów, dodawanie/usuwanie i modyfikowanie produktów na swojej liście zakupów.
+Projekt zakłada stworzenie działającej w chmurze aplikacji typu lista zakupów. Aplikacja zakłada następujące funkcjonalności:  
+- [x] logowanie się na konto używtkownika
+- [x] stworzenie nowego konta
+- [ ] tworzenie list
+- [ ] usuwanie list zakupów
+- [x] dodawanie produktów do listy
+- [x] usuwanie produktów z listy
+- [x] modyfikowanie prodóktów na liście.
 
 
 **(DST)Aplikacja CRUD z wdrążeniem w chmurze z użyciem potoku CI/CD**

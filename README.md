@@ -9,8 +9,8 @@
 Projekt zakłada stworzenie działającej w chmurze aplikacji typu lista zakupów. Aplikacja zakłada następujące funkcjonalności:  
 - [x] logowanie się na konto używtkownika
 - [x] stworzenie nowego konta
-- [ ] tworzenie list
-- [ ] usuwanie list zakupów
+- [x] tworzenie list
+- [x] usuwanie list zakupów
 - [x] dodawanie produktów do listy
 - [x] usuwanie produktów z listy
 - [x] modyfikowanie prodóktów na liście.

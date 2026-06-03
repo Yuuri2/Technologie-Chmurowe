@@ -1,0 +1,149 @@
+name: Build strona-www
+
+on:
+  push:
+    paths:
+      - 'terraform/**'
+      - 'strona-www/**'
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - 'strona-www/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+
+    outputs:
+      terraform: ${{ steps.filter.outputs.terraform }}
+      webapp: ${{ steps.filter.outputs.webapp }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            terraform:
+              - 'terraform/**'
+            webapp:
+              - 'strona-www/**'
+
+  terraform:
+    needs: changes
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.terraform == 'true'
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    env:
+      TF_IN_AUTOMATION: true
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_USE_OIDC: true
+      TF_VAR_postgres_admin_login: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
+      TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+      TF_VAR_webapp_name: ${{ vars.WEBAPP_NAME }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure login for Terraform
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve -input=false
+
+  build:
+    needs: [changes, terraform]
+    runs-on: ubuntu-latest
+    if: >-
+      always() &&
+      needs.terraform.result != 'failure' &&
+      (needs.changes.outputs.terraform == 'true' || needs.changes.outputs.webapp == 'true' || github.event_name == 'workflow_dispatch')
+
+    defaults:
+      run:
+        working-directory: strona-www
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: strona-www/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Package build output
+        run: zip -r ../strona-www-webapp.zip build
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: strona-www-webapp
+          path: strona-www-webapp.zip
+          if-no-files-found: error
+
+  deploy:
+    needs: [changes, terraform, build]
+    runs-on: ubuntu-latest
+    if: >-
+      always() &&
+      needs.build.result == 'success' &&
+      needs.terraform.result != 'failure'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure login for deployment
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download ZIP artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: strona-www-webapp
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.WEBAPP_NAME }}
+          package: strona-www-webapp.zip

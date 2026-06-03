@@ -26,18 +26,15 @@ variable "postgres_admin_password" {
   sensitive = true
 }
 
+variable "webapp_name" {
+  type = string
+}
+
 
 
 resource "azurerm_resource_group" "rg" {
   name     = "TerraTC"
   location = "PolandCentral"
-}
-
-resource "random_string" "webapp_suffix" {
-  length  = 6
-  upper   = false
-  special = false
-  numeric = true
 }
 
 resource "azurerm_service_plan" "web" {
@@ -61,7 +58,7 @@ resource "azurerm_postgresql_flexible_server" "baza" {
 }
 
 resource "azurerm_linux_web_app" "app" {
-  name                = "terratc-web-${random_string.webapp_suffix.result}"
+  name                = var.webapp_name
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   service_plan_id     = azurerm_service_plan.web.id
@@ -69,7 +66,6 @@ resource "azurerm_linux_web_app" "app" {
   https_only = true
 
   app_settings = {
-    SCM_DO_BUILD_DURING_DEPLOYMENT = "true"
     WEBSITE_RUN_FROM_PACKAGE       = "1"
   }
 
@@ -77,7 +73,7 @@ resource "azurerm_linux_web_app" "app" {
     always_on = true
 
     application_stack {
-      node_version = "22-lts"
+      node_version = "24-lts"
     }
   }
 }

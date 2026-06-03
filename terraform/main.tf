@@ -67,7 +67,7 @@ resource "azurerm_linux_web_app" "app" {
 
   site_config {
     always_on = true
-
+    app_command_line = "node build/index.js"
     application_stack {
       node_version = "24-lts"
     }

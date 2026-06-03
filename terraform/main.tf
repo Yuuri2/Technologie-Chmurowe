@@ -74,6 +74,13 @@ resource "azurerm_linux_web_app" "app" {
   }
 }
 
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_github_runners" {
+  name             = "allow-azure-internal-networks"
+  server_id        = azurerm_postgresql_flexible_server.baza.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+}
+
 output "postgres_fqdn" {
   value = azurerm_postgresql_flexible_server.baza.fqdn
 }

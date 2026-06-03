@@ -148,7 +148,7 @@ jobs:
       - name: Run Database Migrations
         env:
           DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
-        run: npx run migrate up
+        run: npx node-pg-migrate up
 
   deploy:
     needs: [changes, terraform, build, migrate]

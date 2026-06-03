@@ -7,25 +7,79 @@
     let password = $state('');
     let passwordCheck = $state('');
 
-    //testowe dane do logowania
-    let savedName = "admin";
-    let savedPswd = "2137";
+    //struktura mimikująca bazę
+    interface DbUser { id: number; username: string; password: string; }
+    interface DbProduct { id: number; name: string; }
+    interface DbList { owner: number; list: number; product: number; quantity: number; }
     //konstruktor obiektu produkt
     interface Product{
         id: number;
         productName: string;
         quantity: number;
     }
-    //lista pomocnicza do wyświetlania
-    let products = $state<Product[]>([]);
+    //przykładowe dane w bazie
+    let dbUsers = $state<DbUser[]>([
+        { id: 0, username: 'Adrian', password: '2137' },
+        { id: 1, username: 'Asag', password: '22' },
+        { id: 2, username: 'Teo', password: 'teorzechy' },
+        { id: 3, username: 'Zbigniew K', password: 'I<3Lodz' }
+    ]);
 
+    let dbProducts = $state<DbProduct[]>([
+        { id: 0, name: 'Orange' },
+        { id: 1, name: 'Bread' },
+        { id: 2, name: 'Tomato' }
+    ]);
+
+    let dbLists = $state<DbList[]>([
+        { owner: 1, list: 1, product: 0, quantity: 6 },
+        { owner: 3, list: 1, product: 1, quantity: 2 }
+    ]);
+
+    //Stan sesji
+    let currentUser = $state<DbUser | null>(null);
+    let currentListId = $state<number | null>(null);
+    let selectedListId = $state<number | null>(null);
+    let selectedRowIndex = $state<number | null>(null);
+    
     //Zmienne do dodawania i edycji produktu
     let isAddingProduct = $state(false);
     let isEditingProduct = $state(false)
     let newName = $state('');
     let newQuantity = $state(1);
+    //Grupowanie list urzytkownika
+    let userLists = $derived.by(() => {
+        if (!currentUser) return [];
 
-    let selectedProductId = $state<number | null>(null);
+        const myRecords = dbLists.filter(l => l.owner === currentUser!.id);
+        const uniqueListIds = [...new Set(myRecords.map(l => l.list))];
+        
+        return uniqueListIds.map(id => {
+            const listItems = myRecords.filter(l => l.list === id);
+            return {
+                id: id,
+                name: `Shopping List #${id}`,
+                itemsCount: listItems.reduce((sum) => ++sum, 0),
+                date: new Date().toLocaleDateString()
+            };
+        });
+    });
+    //produkty na liście
+    let productsView = $derived.by(() => {
+        if (!currentUser || currentListId === null) return [];
+        return dbLists
+            .map((record, index) => ({ record, index }))
+            .filter(item => item.record.owner === currentUser!.id && item.record.list === currentListId)
+            .map(item => {
+                const productDef = dbProducts.find(p => p.id === item.record.product);
+                return {
+                    globalIndex: item.index,
+                    productId: item.record.product,
+                    productName: productDef ? productDef.name : 'Unknown',
+                    quantity: item.record.quantity
+                };
+            });
+    });
 
     //rejestracja
     function RegistrationValidation(){
@@ -34,11 +88,11 @@
             return;
         }
         if (password === passwordCheck) {
-            alert('Welcome ' + username);
             // Przesyłanie do bazy
-        
-
-            //
+            const nextUserId = dbUsers.length > 0 ? Math.max(...dbUsers.map(u => u.id)) + 1 : 0;
+            const newUser = { id: nextUserId, username, password };
+            dbUsers.push(newUser);
+            homePage();
         }
         else{
             alert('Passwords are not identical');
@@ -47,79 +101,111 @@
     //logowanie
     function handleLogIn(){
         //Sprawdzanie w bazie
-        if(username == savedName && password == savedPswd){
-            alert("Welcome back!");
-            productsPage();
-        }
-        else{
+        const user = dbUsers.find(u => u.username === username && u.password === password);
+        if (user) {
+            currentUser = user;
+            listSelection();
+        } else {
             alert("Niepoprawne dane");
         }
     }
 
-    function toggleProduct(id: number){
-        if(selectedProductId === id){
-            selectedProductId = null;
+    function toggleProduct(globalIndex: number){
+        if(selectedRowIndex === globalIndex){
+            selectedRowIndex = null;
             return;
         }
-        selectedProductId = id;
+        selectedRowIndex = globalIndex;
+    }
+
+    function toggleList(id: number){
+        if(selectedListId === id){
+            selectedListId = null;
+            return;
+        }
+        selectedListId = id;
+}
+
+    function openList(listId: number) {
+        currentListId = listId;
+        selectedRowIndex = null;
+        productsPage();
+    }
+
+    function createNewList() {
+        if (!currentUser) return;
+        const myRecords = dbLists.filter(l => l.owner === currentUser!.id);
+        const nextListId = myRecords.length > 0 ? Math.max(...myRecords.map(l => l.list)) + 1 : 1;
+        currentListId = nextListId;
+        productsPage();
+    }
+    function deleteList() {
+        if (!currentUser || selectedListId === null) return;
+        dbLists = dbLists.filter(i => !(i.list === selectedListId && i.owner === currentUser!.id));
+        
+        selectedListId = null;
     }
 
     function addProduct(){
+        newName = '';
+        newQuantity = 1;
         isAddingProduct = true;
     }
     function loadProduct(){
         if (newName.trim() === '') return;
 
-        const nextId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-        let product: Product = ({
-            id: nextId,
-            productName: newName,
-            quantity: newQuantity
-        });
-
-        products.push(product);
-
-        // Czyszczenie i zamknięcie okienka
-        newName = '';
-        newQuantity = 1;
+        let productDef = dbProducts.find(p => p.name.toLowerCase() === newName.trim().toLowerCase());
+        if (!productDef) {
+            const nextProdId = dbProducts.length > 0 ? Math.max(...dbProducts.map(p => p.id)) + 1 : 0;
+            productDef = { id: nextProdId, name: newName.trim() };
+            dbProducts.push(productDef);
+        }
+        const existingRecord = dbLists.find(l => l.owner === currentUser!.id && l.list === currentListId! && l.product === productDef!.id);
+        if (existingRecord) {
+            existingRecord.quantity += newQuantity;
+        } else {
+            dbLists.push({
+                owner: currentUser!.id,
+                list: currentListId!,
+                product: productDef.id,
+                quantity: newQuantity
+            });
+        }
         isAddingProduct = false;
     }
     function deleteProduct(){
-        if (selectedProductId === null) return;
-
-        const filtered = products.filter(p => p.id !== selectedProductId);
-        products = filtered.map((item, index) => {
-            return {
-                ...item,
-                id: index + 1
-            };
-        });
-        selectedProductId = null;
+        if (selectedRowIndex === null) return;
+        
+        dbLists = dbLists.filter((_, idx) => idx !== selectedRowIndex);
+        selectedRowIndex = null;
     }
     function startEdit() {
-        if (selectedProductId === null) return;
+        if (selectedRowIndex === null) return;
 
-        const productToEdit = products.find(p => p.id === selectedProductId);
-        if (productToEdit) {
-            newName = productToEdit.productName;
-            newQuantity = productToEdit.quantity;
+        const record = dbLists[selectedRowIndex];
+        if (record) {
+            const productDef = dbProducts.find(p => p.id === record.product);
+            newName = productDef ? productDef.name : '';
+            newQuantity = record.quantity;
             isEditingProduct = true;
         }
     }
 
     function editProduct(){
-        if (selectedProductId === null || newName.trim() === '') return;
-        
-        const productToEdit = products.find(p => p.id === selectedProductId);
-        
-        if (productToEdit) {
-            productToEdit.productName = newName;
-            productToEdit.quantity = newQuantity;
+        if (selectedRowIndex === null || newName.trim() === '' || !currentUser || currentListId === null) return;
+
+        let productDef = dbProducts.find(p => p.name.toLowerCase() === newName.trim().toLowerCase());
+        if (!productDef) {
+            const nextProdId = dbProducts.length > 0 ? Math.max(...dbProducts.map(p => p.id)) + 1 : 0;
+            productDef = { id: nextProdId, name: newName.trim() };
+            dbProducts.push(productDef);
         }
-        newName = '';
-        newQuantity = 1;
+
+        dbLists[selectedRowIndex].product = productDef.id;
+        dbLists[selectedRowIndex].quantity = newQuantity;
+
         isEditingProduct = false;
-        selectedProductId = null;
+        selectedRowIndex = null;
     }
 
     //Zmienianie sceny strony
@@ -134,15 +220,19 @@
         username = '';
         password = '';
         passwordCheck = '';
+        currentUser = null;
+        currentListId = null;
     }
     function productsPage(){
         currentPage = 'productList';
+    }
+    function listSelection(){
+        currentPage = 'selectList';
     }
 
 </script>
 <div id="back">
     <div id="front">
-
         {#if currentPage === 'home'}
         <div id="frontPageSign">
             <h1>Shopping list Center</h1>
@@ -171,14 +261,44 @@
         <div id="SignInBtnContainer">
             <b>Username: </b><input class="UIInput" type="text" name="Name" bind:value={username}/>
             <b>Password: </b><input class="UIInput" type="password" name="Password" bind:value={password}/>
-            <button class="UIButton SubmitBtn" onclick={productsPage}>Submit</button>
+            <button class="UIButton SubmitBtn" onclick={handleLogIn}>Submit</button>
             <button class="UIButton" onclick={homePage}>← Go back</button>
+        </div>
+
+        {:else if currentPage === "selectList"}
+        <div id="settingsPanel">
+            <h4 style="width: 50%; float: left; margin-left: 5%;">{currentUser?.username}</h4>
+            <button style="float: right;" class="UIButton ButtonProductPage" onclick={homePage}>Log out</button>
+        </div>
+        <div id="userPanel">
+            <div id="controllPanel">
+                <button class="UIButton" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px;" onclick={createNewList}>
+                    <b>+ Create New List</b>
+                </button>
+                <button class="UIButton" style="background-color: #a62443; height: 100%; width: 20%; border-radius: 10px;" onclick={deleteList}>
+                    <b>- Delete List</b>
+                </button>
+            </div>
+            
+            <div class="listGrid">
+                {#each userLists as list (list.id)}
+                    <div class="listSquare {selectedListId === list.id ? 'selected' : ''}" 
+                        onclick={() => toggleList(list.id)}
+                        ondblclick={() => openList(list.id)}>
+                        <h3>{list.name}</h3>
+                        <p>{list.itemsCount} total items</p>
+                        <small>Created: {list.date}</small>
+                    </div>
+                {:else}
+                    <p style="color: #aaa; margin-top: 20px;">You don't have any lists.</p>
+                {/each}
+            </div>
         </div>
 
         {:else if currentPage === 'productList'}
         <div id="settingsPanel">
-            <h4 style="width: 50%; float: left; margin-left: 5%;">{username}</h4>
-            <button style="float: right;" class="UIButton ButtonProductPage" onclick={homePage}>Log out</button>
+            <h4 style="width: 50%; float: left; margin-left: 5%;">{currentUser?.username}</h4>
+            <button style="float: right;" class="UIButton ButtonProductPage" onclick={listSelection}>Go back</button>
         </div>
         <div id="userPanel">
             <div id="controllPanel">
@@ -187,12 +307,12 @@
                 <button class="UIButton ButtonProductPage" style="background-color: #f7f3a1;" onclick={startEdit}>Edit</button>
             </div>
             <div id="productPanel">
-                {#each products as product (product.id)}
-                    <div 
-                        class="productRow {selectedProductId === product.id ? 'selected' : ''}"
-                        onclick={() => toggleProduct(product.id)}
+                {#each productsView as product, i (product.globalIndex)}
+                    <div
+                        class="productRow {selectedRowIndex === product.globalIndex ? 'selected' : ''}"
+                        onclick={() => toggleProduct(product.globalIndex)}
                     >
-                        <span class="prodId">#{product.id}</span>
+                        <span class="prodId">#{i + 1}</span>
                         <span class="prodName">{product.productName}</span>
                         <span class="prodQty">x{product.quantity}</span>
                     </div>
@@ -240,7 +360,7 @@
 
                     <div class="modalActions">
                         <button class="UIButton modalBtn save" onclick={editProduct}>Save</button>
-                        <button class="UIButton modalBtn cancel" onclick={() => {isEditingProduct = false; newQuantity=1; newName = ''}}>Cancel</button>
+                        <button class="UIButton modalBtn cancel" onclick={() => isEditingProduct = false}>Cancel</button>
                     </div>
                 </div>
             </div>
@@ -291,7 +411,6 @@
 #settingsPanel{
     width: 100%;
     height: 10%;
-
 }
 
 #userPanel{
@@ -309,6 +428,7 @@
     height: 10%;
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 #productPanel{
@@ -317,6 +437,58 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-y: auto;
+}
+
+.listGrid {
+    width: 100%;
+    height: 90%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.listSquare {
+    width: 180px;
+    height: 180px;
+    background-color: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    padding: 10px;
+    text-align: center;
+}
+
+.listSquare h3 {
+    margin: 10px 0;
+    color: #333;
+}
+
+.listSquare p {
+    color: #666;
+    font-weight: bold;
+}
+
+.listSquare small {
+    margin-top: 15px;
+    color: #999;
+}
+
+.listSquare:hover {
+    transform: scale(1.05);
+    border-color: #2196f3;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
 }
 
 .UIButton{
@@ -367,7 +539,6 @@
     transition: background-color 0.2s, border-color 0.2s;
 }
 
-/* Podświetlenie wybranego produktu */
 .productRow.selected {
     background-color: #e3f2fd;
     border: 2px solid #2196f3;
@@ -377,11 +548,10 @@
     background-color: #f0f0f0;
 }
 
-.prodId { color: #888; width: 10%; }
-.prodName { font-weight: bold; width: 60%; text-align: left; }
+.prodId { color: #888; width: 15%; }
+.prodName { font-weight: bold; width: 55%; text-align: left; }
 .prodQty { width: 20%; text-align: right; }
 
-/* Style dla Modali (Overlay i Box) */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -444,4 +614,8 @@
     border: 2px solid #ccc;
 }
 
+.listSquare.selected {
+    background-color: #ffebee;
+    border: 2px solid #a62443;
+}
 </style>

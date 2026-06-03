@@ -2,12 +2,8 @@ terraform {
     required_providers {
     azurerm = {
             source  = "hashicorp/azurerm"
-            version = "~> 3.0.2"
+            version = "~> 4.75"
         }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.6"
-    }
     }
 
     required_version = ">= 0.12"
@@ -46,10 +42,10 @@ resource "azurerm_service_plan" "web" {
 }
 
 resource "azurerm_postgresql_flexible_server" "baza" {
-  name                          = "postrgres_baza"
+  name                          = "postrgresbaza"
   resource_group_name           = azurerm_resource_group.rg.name
   location                      = azurerm_resource_group.rg.location
-  version                       = "18"
+  version                       = "13"
   public_network_access_enabled = true
   administrator_login           = var.postgres_admin_login
   administrator_password        = var.postgres_admin_password
@@ -58,7 +54,7 @@ resource "azurerm_postgresql_flexible_server" "baza" {
 }
 
 resource "azurerm_linux_web_app" "app" {
-  name                = var.webapp_name
+  name                = "tcwebapp-maszyna"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   service_plan_id     = azurerm_service_plan.web.id
@@ -73,7 +69,7 @@ resource "azurerm_linux_web_app" "app" {
     always_on = true
 
     application_stack {
-      node_version = "24-lts"
+      node_version = "16-lts"
     }
   }
 }

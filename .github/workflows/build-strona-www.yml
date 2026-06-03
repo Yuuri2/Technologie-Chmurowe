@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   changes:
@@ -51,7 +50,9 @@ jobs:
       TF_VAR_postgres_admin_login: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
       TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
       TF_VAR_webapp_name: ${{ vars.WEBAPP_NAME }}
-
+    outputs:
+      postgres_fqdn: ${{ steps.get_fqdn.outputs.postgres_fqdn }}
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -72,6 +73,11 @@ jobs:
 
       - name: Terraform apply
         run: terraform apply -auto-approve -input=false
+      
+      - name: Expose Terraform Outputs
+        id: get_fqdn
+        run: |
+          echo "postgres_fqdn=$(terraform output -raw postgres_fqdn)" >> $GITHUB_OUTPUT
 
   build:
     needs: [changes, terraform]
@@ -106,7 +112,7 @@ jobs:
         run: npm prune --omit=dev
 
       - name: Package build output
-        run: zip -r ../strona-www-webapp.zip build package.json package-lock.json node_modules
+        run: zip -r ../strona-www-webapp.zip build migrations package.json package-lock.json node_modules
 
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
@@ -114,9 +120,39 @@ jobs:
           name: strona-www-webapp
           path: strona-www-webapp.zip
           if-no-files-found: error
+  
+  migrate:
+    migrate:
+    needs: [changes, terraform, build]
+    runs-on: ubuntu-latest
+    # Run if the database was just modified, or if webapp changed (migrations might be new)
+    if: >-
+      always() &&
+      needs.build.result == 'success' &&
+      needs.terraform.result != 'failure'
+    defaults:
+      run:
+        working-directory: strona-www
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Dependencies (Including node-pg-migrate)
+        run: npm ci
+
+      # ⬇️ Executes migrations using variables mapped directly from Secrets, Vars, and Terraform
+      - name: Run Database Migrations
+        env:
+          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
+        run: npx run migrate up
 
   deploy:
-    needs: [changes, terraform, build]
+    needs: [changes, terraform, build, migrate]
     runs-on: ubuntu-latest
     if: >-
       always() &&

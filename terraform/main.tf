@@ -54,12 +54,12 @@ resource "azurerm_postgresql_flexible_server" "baza" {
 }
 
 resource "azurerm_linux_web_app" "app" {
-  name                = "tcwebapp-maszyna"
+  name                = var.webapp_name
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   service_plan_id     = azurerm_service_plan.web.id
 
-  https_only = true
+  https_only = false
 
   app_settings = {
     WEBSITE_RUN_FROM_PACKAGE       = "1"
@@ -69,7 +69,7 @@ resource "azurerm_linux_web_app" "app" {
     always_on = true
 
     application_stack {
-      node_version = "16-lts"
+      node_version = "24-lts"
     }
   }
 }

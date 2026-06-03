@@ -63,6 +63,12 @@ resource "azurerm_linux_web_app" "app" {
 
   app_settings = {
     WEBSITE_RUN_FROM_PACKAGE       = "1"
+
+    PGHOST     = azurerm_postgresql_flexible_server.baza.fqdn
+    PGUSER     = var.postgres_admin_login
+    PGPASSWORD = var.postgres_admin_password
+    PGDATABASE = "postgres"
+    PGPORT     = "5432"
   }
 
   site_config {

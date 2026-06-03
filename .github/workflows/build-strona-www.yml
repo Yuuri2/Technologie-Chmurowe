@@ -122,7 +122,6 @@ jobs:
           if-no-files-found: error
   
   migrate:
-    migrate:
     needs: [changes, terraform, build]
     runs-on: ubuntu-latest
     # Run if the database was just modified, or if webapp changed (migrations might be new)

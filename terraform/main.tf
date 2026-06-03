@@ -54,7 +54,7 @@ resource "azurerm_postgresql_flexible_server" "baza" {
 }
 
 resource "azurerm_linux_web_app" "app" {
-  name                = var.webapp_name
+  name                = "tcwebapp-maszyna"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   service_plan_id     = azurerm_service_plan.web.id

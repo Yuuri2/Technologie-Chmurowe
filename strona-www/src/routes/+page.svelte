@@ -21,21 +21,38 @@
 
     // Reakcja na logowanie/rejestrację (to zostaje bez zmian)
     $effect(() => {
-        if (form?.success) {
-            if (form.user) {
-                currentUser = form.user;
-                currentPage = 'selectList';
-                username = '';
-                password = '';
-            } else {
-                alert('Konto założone pomyślnie! Możesz się zalogować.');
-                currentPage = 'logIn';
-                passwordCheck = '';
-            }
-        } else if (form?.error) {
-            alert(form.error);
+    // Jeśli nie ma obiektu form, nic nie rób
+    if (!form) return;
+
+    if (form.success) {
+        // 1. Akcja LOGOWANIA (zwraca obiekt 'user')
+        if (form.user) {
+            currentUser = form.user;
+            currentPage = 'selectList';
+            username = '';
+            password = '';
+        } 
+        // 2. Akcja REJESTRACJI 
+        // Sprawdzamy, czy jesteśmy na stronie rejestracji, żeby nie przechwycić sukcesu z dodawania produktów
+        else if (currentPage === 'register') {
+            alert('Konto założone pomyślnie! Możesz się zalogować.');
+            currentPage = 'logIn';
+            passwordCheck = '';
         }
-    });
+        // 3. Pozostałe akcje (addProduct, deleteList itp.)
+        else {
+            // Tutaj możesz dodać opcjonalny kod, np. czyszczenie zaznaczenia w tabeli po usunięciu
+            if (currentPage === 'selectList') {
+                selectedListId = null; 
+            }
+            if (currentPage === 'productList') {
+                selectedRowIndex = null;
+            }
+        }
+    } else if (form.error) {
+        alert(form.error);
+    }
+});
 
     // 2. Grupowanie list - teraz czytamy z data.dbLists z PostgreSQL
     let userLists = $derived.by(() => {
@@ -98,26 +115,10 @@
     productsPage(); // Przekierowuje nas do pustego panelu nowej listy
 }
 
-    function deleteList() {
-        // TODO: Akcja serwerowa "deleteList"
-        alert("Funkcja w przebudowie - wymaga połączenia z PostgreSQL!");
-    }
-
     function addProduct(){
         newName = '';
         newQuantity = 1;
         isAddingProduct = true;
-    }
-
-    function loadProduct(){
-        // TODO: Akcja serwerowa do INSERT INTO list_items
-        alert("Funkcja w przebudowie - wymaga połączenia z PostgreSQL!");
-        isAddingProduct = false;
-    }
-
-    function deleteProduct(){
-        // TODO: Akcja serwerowa DELETE FROM
-        alert("Funkcja w przebudowie - wymaga połączenia z PostgreSQL!");
     }
 
     function startEdit() {
@@ -129,12 +130,6 @@
             newQuantity = record.quantity;
             isEditingProduct = true;
         }
-    }
-
-    function editProduct(){
-        // TODO: Akcja serwerowa UPDATE
-        alert("Funkcja w przebudowie - wymaga połączenia z PostgreSQL!");
-        isEditingProduct = false;
     }
 
     // --- NAWIGACJA ---
@@ -155,7 +150,7 @@
     <div id="front">
         {#if currentPage === 'home'}
         <div id="frontPageSign">
-            <h1>Shopping list Center version 1.2</h1>
+            <h1>Shopping list Center version 1.3</h1>
         </div>
         <div id="SignInBtnContainer">
             <button class="UIButton" onclick={logInPage}>Log In</button>

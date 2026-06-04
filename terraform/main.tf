@@ -79,6 +79,12 @@ resource "azurerm_postgresql_flexible_server_database" "db" {
   charset   = "utf8"
 }
 
+resource "azurerm_postgresql_flexible_server_configuration" "allow_pgcrypto" {
+  name      = "azure.extensions"
+  server_id = azurerm_postgresql_flexible_server.baza.id
+  value     = "PGCRYPTO"
+}
+
 resource "azurerm_linux_web_app" "app" {
   name                = var.webapp_name
   resource_group_name = azurerm_resource_group.rg.name

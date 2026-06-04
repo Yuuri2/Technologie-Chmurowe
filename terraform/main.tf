@@ -93,7 +93,7 @@ resource "azurerm_linux_web_app" "app" {
     PGHOST     = azurerm_postgresql_flexible_server.baza.fqdn
     PGUSER     = var.postgres_admin_login
     PGPASSWORD = var.postgres_admin_password
-    PGDATABASE = azurerm_postgresql_flexible_server_database.name
+    PGDATABASE = azurerm_postgresql_flexible_server_database.db.name
     PGPORT     = "5432"
   }
 

@@ -72,6 +72,13 @@ resource "azurerm_postgresql_flexible_server_configuration" "disable_ssl" {
   value     = "OFF"
 }
 
+resource "azurerm_postgresql_flexible_server_database" "db" {
+  name      = "turbopostrgresbaza"
+  server_id = azurerm_postgresql_flexible_server.baza.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
+
 resource "azurerm_linux_web_app" "app" {
   name                = var.webapp_name
   resource_group_name = azurerm_resource_group.rg.name
@@ -86,7 +93,7 @@ resource "azurerm_linux_web_app" "app" {
     PGHOST     = azurerm_postgresql_flexible_server.baza.fqdn
     PGUSER     = var.postgres_admin_login
     PGPASSWORD = var.postgres_admin_password
-    PGDATABASE = "postgres"
+    PGDATABASE = azurerm_postgresql_flexible_server_database.name
     PGPORT     = "5432"
   }
 

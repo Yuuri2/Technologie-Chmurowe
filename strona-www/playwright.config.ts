@@ -24,6 +24,10 @@ export default defineConfig({
   webServer: {
     command: 'npm run build && npm run preview',
     port: 4173,
+<<<<<<< HEAD
     reuseExistingServer: true,
+=======
+    reuseExistingServer: !process.env.CI,
+>>>>>>> parent of b7177e3 (changed Playwright config)
   },
 });

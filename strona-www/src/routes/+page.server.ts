@@ -1,11 +1,11 @@
-import { db } from '$lib/server/db';
+import { pool } from '$lib/server/database/pool';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
     try {
-        const listsResult = await db.query('SELECT * FROM lists'); 
-        const productsResult = await db.query('SELECT * FROM products');
+        const listsResult = await pool.query('SELECT * FROM lists'); 
+        const productsResult = await pool.query('SELECT * FROM products');
 
         return {
             dbLists: listsResult.rows,
@@ -27,7 +27,7 @@ export const actions: Actions = {
         }
 
         try {
-            await db.query(
+            await pool.query(
                 'INSERT INTO users (id, username, password) VALUES (COALESCE((SELECT MAX(id) FROM users), 0) + 1, $1, $2)',
                 [username, password]
             );
@@ -46,7 +46,7 @@ export const actions: Actions = {
         const password = data.get('password') as string;
 
         try {
-            const result = await db.query(
+            const result = await pool.query(
                 'SELECT * FROM users WHERE username = $1 AND password = crypt($2, password)',
                 [username, password]
             );
@@ -67,7 +67,7 @@ export const actions: Actions = {
         const ownerId = Number(formData.get('ownerId'));
 
         try {
-            await db.query(
+            await pool.query(
                 'DELETE FROM lists WHERE list = $1 AND owner = $2',
                 [listId, ownerId]
             );
@@ -89,11 +89,11 @@ export const actions: Actions = {
         }
 
         try {
-            let prodResult = await db.query('SELECT id FROM products WHERE name = $1', [productName]);
+            let prodResult = await pool.query('SELECT id FROM products WHERE name = $1', [productName]);
             let productId;
 
             if (prodResult.rows.length === 0) {
-                const insertProd = await db.query(
+                const insertProd = await pool.query(
                     'INSERT INTO products (id, name) VALUES (COALESCE((SELECT MAX(id) FROM products), 0) + 1, $1) RETURNING id',
                     [productName]
                 );
@@ -102,7 +102,7 @@ export const actions: Actions = {
                 productId = prodResult.rows[0].id;
             }
 
-            await db.query(`
+            await pool.query(`
                 INSERT INTO lists (owner, list, product, quantity) 
                 VALUES ($1, $2, $3, $4)
                 ON CONFLICT (owner, list, product) 
@@ -122,7 +122,7 @@ export const actions: Actions = {
         const productId = Number(formData.get('productId'));
 
         try {
-            await db.query(
+            await pool.query(
                 'DELETE FROM lists WHERE owner = $1 AND list = $2 AND product = $3',
                 [ownerId, listId, productId]
             );
@@ -145,11 +145,11 @@ export const actions: Actions = {
         }
 
         try {
-            let prodResult = await db.query('SELECT id FROM products WHERE name = $1', [newProductName]);
+            let prodResult = await pool.query('SELECT id FROM products WHERE name = $1', [newProductName]);
             let newProductId;
 
             if (prodResult.rows.length === 0) {
-                const insertProd = await db.query(
+                const insertProd = await pool.query(
                     'INSERT INTO products (id, name) VALUES (COALESCE((SELECT MAX(id) FROM products), 0) + 1, $1) RETURNING id',
                     [newProductName]
                 );
@@ -159,13 +159,13 @@ export const actions: Actions = {
             }
 
             if (oldProductId === newProductId) {
-                await db.query(
+                await pool.query(
                     'UPDATE lists SET quantity = $1 WHERE owner = $2 AND list = $3 AND product = $4',
                     [newQuantity, ownerId, listId, oldProductId]
                 );
             } else {
-                await db.query('DELETE FROM lists WHERE owner = $1 AND list = $2 AND product = $3', [ownerId, listId, oldProductId]);
-                await db.query(`
+                await pool.query('DELETE FROM lists WHERE owner = $1 AND list = $2 AND product = $3', [ownerId, listId, oldProductId]);
+                await pool.query(`
                     INSERT INTO lists (owner, list, product, quantity)
                     VALUES ($1, $2, $3, $4)
                     ON CONFLICT (owner, list, product)

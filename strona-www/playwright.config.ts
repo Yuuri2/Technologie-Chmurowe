@@ -21,5 +21,8 @@ export default defineConfig({
     command: 'npm run build && npm run preview',
     port: 4173,
     reuseExistingServer: !process.env.CI,
+    env: {
+      DATABASE_URL: process.env.DATABASE_URL || '',
+    },
   },
 });

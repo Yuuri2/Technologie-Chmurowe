@@ -156,23 +156,17 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run Database Migrations
-        env:
-          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
-        run: npx node-pg-migrate up
-
-      - name: Run End-to-End Tests
-        env:
-          # SvelteKit w trybie produkcyjnym/preview wymaga dokładnej nazwy zmiennej, którą masz w kodzie (np. DATABASE_URL)
-          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
-        run: |
-          export DATABASE_URL="${{ env.DATABASE_URL }}"
-          npm run test:e2e
-
+      # 1. Najpierw migrujemy bazę danych przy użyciu właściwych zmiennych z Terraform
       - name: Run Database Migrations
         env:
           DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}/${{ needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}?ssl=true
         run: npx node-pg-migrate up
+
+      # 2. Następnie odpalamy testy E2E z dokładnie tym samym adresem bazy (Playwright przekaże go do serwera preview)
+      - name: Run End-to-End Tests
+        env:
+          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}/${{ needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}?ssl=true
+        run: npm run test:e2e
 
   deploy:
     needs: [changes, terraform, build, migrate]

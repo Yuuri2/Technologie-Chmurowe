@@ -1,12 +1,19 @@
 terraform {
-    required_providers {
+  required_providers {
     azurerm = {
-            source  = "hashicorp/azurerm"
-            version = "~> 4.75"
-        }
+      source  = "hashicorp/azurerm"
+      version = "~> 4.75"
     }
+  }
 
-    required_version = ">= 0.12"
+  required_version = ">= 0.12"
+
+  backend "azurerm" {
+    resource_group_name  = "TerraformState-RG"
+    storage_account_name = "tfbackend1337" # Twoja unikalna nazwa z Kroku 1
+    container_name       = "tfstate"
+    key                  = "prod.terraform.tfstate"
+  }
 }
 
 provider "azurerm" {
@@ -30,7 +37,7 @@ variable "webapp_name" {
 
 resource "azurerm_resource_group" "rg" {
   name     = "TerraTC"
-  location = "westeurope"
+  location = "francecentral"
 }
 
 resource "azurerm_service_plan" "web" {

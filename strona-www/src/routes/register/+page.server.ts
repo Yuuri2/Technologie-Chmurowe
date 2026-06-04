@@ -35,6 +35,8 @@ export const actions: Actions = {
             });
 
         } catch (error: any){
+            return fail(409, {error: error.toString()});
+
             if (error.code === '23505') { // podobno to jest kod error jak już istnieje taka nazwa
                 return fail(409, {error: "nazwa użytkownika zajęta"});
             }

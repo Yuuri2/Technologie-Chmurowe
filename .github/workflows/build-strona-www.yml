@@ -152,6 +152,21 @@ jobs:
 
       - name: Install Dependencies (Including node-pg-migrate)
         run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Database Migrations
+        env:
+          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
+        run: npx node-pg-migrate up
+
+      # ⬇️ Uruchomienie testów E2E, które komunikują się bezpośrednio z nowo zmigrowaną bazą produkcyjną na Azure
+      - name: Run End-to-End Tests
+        env:
+          # Przekazujemy adres bazy do kodu aplikacji SvelteKit, aby serwer testowy 'npm run preview' połączył się z Azure
+          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
+        run: npm run test:e2e
 
       # ⬇️ Executes migrations using variables mapped directly from Secrets, Vars, and Terraform
       - name: Run Database Migrations

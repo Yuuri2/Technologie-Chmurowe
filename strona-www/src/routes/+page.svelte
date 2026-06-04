@@ -155,7 +155,7 @@
     <div id="front">
         {#if currentPage === 'home'}
         <div id="frontPageSign">
-            <h1>Shopping list Center</h1>
+            <h1>Shopping list Center version 1.1</h1>
         </div>
         <div id="SignInBtnContainer">
             <button class="UIButton" onclick={logInPage}>Log In</button>

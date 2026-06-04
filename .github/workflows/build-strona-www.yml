@@ -40,7 +40,11 @@ jobs:
   terraform:
     needs: changes
     runs-on: ubuntu-latest
-    if: needs.changes.outputs.terraform == 'true'
+    if: >-
+      needs.changes.outputs.terraform == 'true' || 
+      needs.changes.outputs.webapp == 'true' || 
+      needs.changes.outputs.migrations == 'true' || 
+      github.event_name == 'workflow_dispatch'
     defaults:
       run:
         working-directory: terraform

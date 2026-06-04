@@ -50,14 +50,14 @@ jobs:
       TF_VAR_postgres_admin_login: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
       TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
       TF_VAR_webapp_name: ${{ vars.WEBAPP_NAME }}
-      # Dodane zmienne do uwierzytelniania Remote Backend w Azure
       ARM_CLIENT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
       ARM_CLIENT_SECRET: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
       ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
       ARM_TENANT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
       
     outputs:
-      postgres_fqdn: ${{ steps.get_fqdn.outputs.postgres_fqdn }}
+      postgres_fqdn: ${{ steps.expose_outputs.outputs.postgres_fqdn }}
+      postgres_db_name: ${{ steps.expose_outputs.outputs.postgres_db_name }}
     
     steps:
       - name: Checkout repository
@@ -81,9 +81,10 @@ jobs:
         run: terraform apply -auto-approve -input=false
       
       - name: Expose Terraform Outputs
-        id: get_fqdn
+        id: expose_outputs
         run: |
           echo "postgres_fqdn=$(terraform output -raw postgres_fqdn)" >> $GITHUB_OUTPUT
+          echo "postgres_db_name=$(terraform output -raw postgres_db_name)" >> $GITHUB_OUTPUT
 
   build:
     needs: [changes, terraform]
@@ -133,7 +134,6 @@ jobs:
   migrate:
     needs: [changes, terraform, build]
     runs-on: ubuntu-latest
-    # Run if the database was just modified, or if webapp changed (migrations might be new)
     if: >-
       always() &&
       needs.build.result == 'success' &&
@@ -168,10 +168,9 @@ jobs:
           DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
         run: npm run test:e2e
 
-      # ⬇️ Executes migrations using variables mapped directly from Secrets, Vars, and Terraform
       - name: Run Database Migrations
         env:
-          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
+          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}/${{ needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}?ssl=true
         run: npx node-pg-migrate up
 
   deploy:

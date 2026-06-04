@@ -130,3 +130,7 @@ output "webapp_name" {
 output "webapp_default_hostname" {
   value = azurerm_linux_web_app.app.default_hostname
 }
+
+output "postgres_db_name" {
+  value = azurerm_postgresql_flexible_server_database.db.name
+}

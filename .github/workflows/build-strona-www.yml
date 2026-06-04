@@ -172,8 +172,9 @@ jobs:
 
       # Poprawiony krok: Wstrzykujemy DATABASE_URL bezpośrednio do środowiska wykonawczego powłoki (sh/bash)
       - name: Run End-to-End Tests
+        env:
+          DATABASE_URL: "postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn }}/${{ needs.terraform.outputs.postgres_db_name }}?ssl=true"
         run: |
-          export DATABASE_URL="postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn }}/${{ needs.terraform.outputs.postgres_db_name }}?ssl=true"
           npm run test:e2e
 
   deploy:

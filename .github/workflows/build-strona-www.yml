@@ -131,7 +131,7 @@ jobs:
           if-no-files-found: error
 
   migrate:
-    needs: [changes, terraform]
+    needs: [changes, build, terraform]
     runs-on: ubuntu-latest
     defaults:
       run:

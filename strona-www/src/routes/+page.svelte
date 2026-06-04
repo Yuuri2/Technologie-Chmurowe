@@ -5,12 +5,9 @@
     let { data, form } = $props();
 
     let currentPage = $state('home');
-    let regUsername = $state('');
-    let regPassword = $state('');
+    let username = $state('');
+    let password = $state('');
     let passwordCheck = $state('');
-
-    let loginUsername = $state('');
-    let loginPassword = $state('');
 
     let currentUser = $state<{ id: number; username: string } | null>(null);
     let currentListId = $state<number | null>(null);
@@ -22,45 +19,45 @@
     let newName = $state('');
     let newQuantity = $state(1);
 
-    // Reakcja na logowanie/rejestrację
+    // Reakcja na logowanie/rejestrację (to zostaje bez zmian)
     $effect(() => {
-        if (!form) return;
+    // Jeśli nie ma obiektu form, nic nie rób
+    if (!form) return;
 
-        if (form.success) {
-            // 1. Akcja LOGOWANIA (zwraca obiekt 'user')
-            if (form.user) {
-                currentUser = form.user;
-                currentPage = 'selectList';
-                // POPRAWKA: Czyszczenie właściwych zmiennych po zalogowaniu
-                loginUsername = '';
-                loginPassword = '';
-            } 
-            // 2. Akcja REJESTRACJI 
-            else if (currentPage === 'register') {
-                alert('Konto założone pomyślnie! Możesz się zalogować.');
-                currentPage = 'logIn';
-                // Czyszczenie pól rejestracji
-                regUsername = '';
-                regPassword = '';
-                passwordCheck = '';
-            }
-            // 3. Pozostałe akcje (addProduct, deleteList itp.)
-            else {
-                if (currentPage === 'selectList') {
-                    selectedListId = null; 
-                }
-                if (currentPage === 'productList') {
-                    selectedRowIndex = null;
-                }
-            }
-        } else if (form.error) {
-            alert(form.error);
+    if (form.success) {
+        // 1. Akcja LOGOWANIA (zwraca obiekt 'user')
+        if (form.user) {
+            currentUser = form.user;
+            currentPage = 'selectList';
+            username = '';
+            password = '';
+        } 
+        // 2. Akcja REJESTRACJI 
+        // Sprawdzamy, czy jesteśmy na stronie rejestracji, żeby nie przechwycić sukcesu z dodawania produktów
+        else if (currentPage === 'register') {
+            alert('Konto założone pomyślnie! Możesz się zalogować.');
+            currentPage = 'logIn';
+            passwordCheck = '';
         }
-    });
+        // 3. Pozostałe akcje (addProduct, deleteList itp.)
+        else {
+            // Tutaj możesz dodać opcjonalny kod, np. czyszczenie zaznaczenia w tabeli po usunięciu
+            if (currentPage === 'selectList') {
+                selectedListId = null; 
+            }
+            if (currentPage === 'productList') {
+                selectedRowIndex = null;
+            }
+        }
+    } else if (form.error) {
+        alert(form.error);
+    }
+});
 
-    // Grupowanie list
+    // 2. Grupowanie list - teraz czytamy z data.dbLists z PostgreSQL
     let userLists = $derived.by(() => {
         if (!currentUser) return [];
+
         const myRecords = data.dbLists.filter(l => l.owner === currentUser!.id);
         const uniqueListIds = [...new Set(myRecords.map(l => l.list))];
         
@@ -75,7 +72,7 @@
         });
     });
 
-    // Produkty na liście
+    // 3. Produkty na liście - teraz czytamy z data.dbLists i data.dbProducts
     let productsView = $derived.by(() => {
         if (!currentUser || currentListId === null) return [];
         return data.dbLists
@@ -106,14 +103,17 @@
         productsPage();
     }
 
+    // --- SEKCJA DO PRZEBUDOWY NA FORMULARZE ---
+
     function createNewList() {
-        if (!currentUser) return;
-        const myRecords = data.dbLists.filter(l => l.owner === currentUser!.id);
-        const nextListId = myRecords.length > 0 ? Math.max(...myRecords.map(l => l.list)) + 1 : 1;
-        
-        currentListId = nextListId;
-        productsPage();
-    }
+    if (!currentUser) return;
+    // Czytamy aktualne rekordy z bazy przekazane przez SvelteKit
+    const myRecords = data.dbLists.filter(l => l.owner === currentUser!.id);
+    const nextListId = myRecords.length > 0 ? Math.max(...myRecords.map(l => l.list)) + 1 : 1;
+    
+    currentListId = nextListId;
+    productsPage(); // Przekierowuje nas do pustego panelu nowej listy
+}
 
     function addProduct(){
         newName = '';
@@ -139,16 +139,13 @@
     function listSelection() { currentPage = 'selectList'; }
     function homePage() {
         currentPage = "home";
-        regUsername = '';
-        regPassword = '';
+        username = '';
+        password = '';
         passwordCheck = '';
-        loginUsername = '';
-        loginPassword = '';
         currentUser = null;
         currentListId = null;
     }
 </script>
-
 <div id="back">
     <div id="front">
         {#if currentPage === 'home'}
@@ -166,11 +163,14 @@
         </div>
         <form method="POST" action="?/register" use:enhance id="SignInBtnContainer">
             <b>Username: </b>
-            <input class="UIInput" type="text" name="username" bind:value={regUsername} required/>
+            <input class="UIInput" type="text" name="username" bind:value={username} required/>
+            
             <b>Password: </b>
-            <input class="UIInput" type="password" name="password" bind:value={regPassword} required/>
+            <input class="UIInput" type="password" name="password" bind:value={password} required/>
+            
             <b>Confirm Password: </b>
             <input class="UIInput" type="password" name="passwordCheck" bind:value={passwordCheck} required/>
+            
             <button type="submit" class="UIButton SubmitBtn">Submit</button>
             <button type="button" class="UIButton" onclick={homePage}>← Go back</button>
         </form>
@@ -181,9 +181,11 @@
         </div>
         <form method="POST" action="?/login" use:enhance id="SignInBtnContainer">
             <b>Username: </b>
-            <input class="UIInput" type="text" name="username" bind:value={loginUsername} required/>
+            <input class="UIInput" type="text" name="username" bind:value={username} required/>
+            
             <b>Password: </b>
-            <input class="UIInput" type="password" name="password" bind:value={loginPassword} required/>
+            <input class="UIInput" type="password" name="password" bind:value={password} required/>
+            
             <button type="submit" class="UIButton SubmitBtn">Submit</button>
             <button type="button" class="UIButton" onclick={homePage}>← Go back</button>
         </form>

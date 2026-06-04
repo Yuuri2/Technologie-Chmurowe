@@ -124,7 +124,7 @@ jobs:
           if-no-files-found: error
 
   migrate:
-    needs: build
+    needs: [build, terraform] # ⬅️ POPRAWIONE: migrate musi słuchać terraform, żeby mieć dostęp do outputs
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -143,11 +143,11 @@ jobs:
 
       - name: Run Database Migrations
         env:
-          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}/${{ needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}?ssl=true
+          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn }}/${{ needs.terraform.outputs.postgres_db_name }}?ssl=true
         run: npx node-pg-migrate up
 
   test:
-    needs: migrate
+    needs: [migrate, terraform] # ⬅️ POPRAWIONE: test musi słuchać bezpośrednio terraform, inaczej straci dostęp do zmiennych!
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -169,7 +169,7 @@ jobs:
 
       - name: Run End-to-End Tests
         env:
-          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}/${{ needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}?ssl=true
+          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn }}/${{ needs.terraform.outputs.postgres_db_name }}?ssl=true
         run: npm run test:e2e
 
   deploy:

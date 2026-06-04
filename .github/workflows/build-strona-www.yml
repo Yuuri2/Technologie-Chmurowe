@@ -161,12 +161,13 @@ jobs:
           DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
         run: npx node-pg-migrate up
 
-      # ⬇️ Uruchomienie testów E2E, które komunikują się bezpośrednio z nowo zmigrowaną bazą produkcyjną na Azure
       - name: Run End-to-End Tests
         env:
-          # Przekazujemy adres bazy do kodu aplikacji SvelteKit, aby serwer testowy 'npm run preview' połączył się z Azure
+          # SvelteKit w trybie produkcyjnym/preview wymaga dokładnej nazwy zmiennej, którą masz w kodzie (np. DATABASE_URL)
           DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
-        run: npm run test:e2e
+        run: |
+          export DATABASE_URL="${{ env.DATABASE_URL }}"
+          npm run test:e2e
 
       - name: Run Database Migrations
         env:

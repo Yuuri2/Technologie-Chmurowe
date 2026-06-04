@@ -84,12 +84,11 @@ jobs:
           echo "postgres_db_name=$(terraform output -raw postgres_db_name)" >> $GITHUB_OUTPUT
 
   build:
-    needs: [changes, terraform, migrate]
+    needs: [changes, terraform]
     if: >-
-      (needs.changes.outputs.webapp == 'true' ||
-      github.event_name == 'workflow_dispatch' ) &&
-      (needs.terraform.result != 'failure' &&
-      needs.migrate.result != 'failure')
+      always() &&
+      needs.terraform.result != 'failure' &&
+      (needs.changes.outputs.terraform == 'true' || needs.changes.outputs.webapp == 'true' || needs.changes.outputs.migrations == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -129,10 +128,7 @@ jobs:
 
   migrate:
     needs: [changes, terraform]
-    if: >-
-      (needs.changes.outputs.migrations == 'true' ||
-      github.event_name == 'workflow_dispatch') &&
-      needs.terraform.result != 'failure'
+    if: ${{  needs.changes.outputs.migrations == 'true' || needs.terraform.outputs == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -160,10 +156,12 @@ jobs:
         run: npx node-pg-migrate up
 
   deploy:
-    needs: [changes, migrate, build]
-    if: >-
-      (needs.migrate.result != 'failure' && needs.build.result == 'success')
+    needs: [changes, terraform, migrate, build]
     runs-on: ubuntu-latest
+    if: >-
+      always() &&
+      needs.build.result == 'success' &&
+      needs.migrate.result == 'success'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

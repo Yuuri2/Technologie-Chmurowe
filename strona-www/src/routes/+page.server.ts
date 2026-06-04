@@ -12,7 +12,6 @@ export const load: PageServerLoad = async () => {
             dbProducts: productsResult.rows
         };
     } catch (error) {
-        console.error("Błąd pobierania z bazy (load):", error);
         return { dbLists: [], dbProducts: [] };
     }
 };
@@ -34,12 +33,9 @@ export const actions: Actions = {
             );
             return { success: true };
         } catch (err: any) {
-            console.error("!!! BŁĄD REJESTRACJI !!!", err);
-            
             if (err.code === '23505') {
                 return fail(400, { error: 'Użytkownik o takiej nazwie już istnieje.' });
             }
-
             return fail(500, { error: `Błąd bazy danych: ${err.message || err}` });
         }
     },
@@ -51,7 +47,7 @@ export const actions: Actions = {
 
         try {
             const result = await db.query(
-                'SELECT * FROM users WHERE username = $1 AND password = $2',
+                'SELECT * FROM users WHERE username = $1 AND password = crypt($2, password)',
                 [username, password]
             );
 
@@ -61,7 +57,6 @@ export const actions: Actions = {
                 return fail(400, { error: 'Niepoprawne dane logowania.' });
             }
         } catch (err) {
-            console.error("BŁĄD LOGOWANIA:", err);
             return fail(500, { error: 'Problem z połączeniem podczas logowania.' });
         }
     },
@@ -78,7 +73,6 @@ export const actions: Actions = {
             );
             return { success: true };
         } catch (err) {
-            console.error("BŁĄD DELETE_LIST:", err);
             return fail(500, { error: 'Nie udało się usunąć listy.' });
         }
     },
@@ -117,7 +111,6 @@ export const actions: Actions = {
             
             return { success: true };
         } catch (err) {
-            console.error("BŁĄD W ADD_PRODUCT:", err);
             return fail(500, { error: 'Błąd podczas dodawania produktu.' });
         }
     },
@@ -135,7 +128,6 @@ export const actions: Actions = {
             );
             return { success: true };
         } catch (err) {
-            console.error("BŁĄD DELETE_PRODUCT:", err);
             return fail(500, { error: 'Nie udało się usunąć produktu.' });
         }
     },
@@ -153,7 +145,6 @@ export const actions: Actions = {
         }
 
         try {
-            // 1. Znajdź lub stwórz ID dla nowej nazwy produktu (ZABEZPIECZONE przed brakiem SERIAL)
             let prodResult = await db.query('SELECT id FROM products WHERE name = $1', [newProductName]);
             let newProductId;
 
@@ -167,15 +158,12 @@ export const actions: Actions = {
                 newProductId = prodResult.rows[0].id;
             }
 
-            // 2. Aktualizujemy wpis w liście zakupów
             if (oldProductId === newProductId) {
-                // Zmieniła się tylko ilość
                 await db.query(
                     'UPDATE lists SET quantity = $1 WHERE owner = $2 AND list = $3 AND product = $4',
                     [newQuantity, ownerId, listId, oldProductId]
                 );
             } else {
-                // Zmienił się produkt -> usuwamy stary wpis i nadpisujemy nowym
                 await db.query('DELETE FROM lists WHERE owner = $1 AND list = $2 AND product = $3', [ownerId, listId, oldProductId]);
                 await db.query(`
                     INSERT INTO lists (owner, list, product, quantity)
@@ -187,7 +175,6 @@ export const actions: Actions = {
 
             return { success: true };
         } catch (err) {
-            console.error("BŁĄD EDIT_PRODUCT:", err);
             return fail(500, { error: 'Modyfikacja nie powiodła się.' });
         }
     }

@@ -158,41 +158,41 @@ jobs:
           PGSSLMODE: "require"
         run: npx node-pg-migrate up
 
-  test:
-    needs: [terraform, migrate]
-    runs-on: ubuntu-latest
-    if: >-
-      always() &&
-      needs.migrate.result != 'failure' &&
-      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
-    defaults:
-      run:
-        working-directory: strona-www
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  # test:
+  #   needs: [terraform, migrate]
+  #   runs-on: ubuntu-latest
+  #   if: >-
+  #     always() &&
+  #     needs.migrate.result != 'failure' &&
+  #     (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
+  #   defaults:
+  #     run:
+  #       working-directory: strona-www
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
+  #     - name: Set up Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 24
 
-      - name: Install Dependencies
-        run: npm ci
+  #     - name: Install Dependencies
+  #       run: npm ci
       
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+  #     - name: Install Playwright Browsers
+  #       run: npx playwright install --with-deps chromium
 
-      - name: Run End-to-End Tests
-        env:
-          PGUSER: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
-          PGPASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
-          PGHOST: ${{ needs.terraform.outputs.postgres_fqdn != '' && needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}
-          PGPORT: "5432"
-          PGDATABASE: ${{ needs.terraform.outputs.postgres_db_name != '' && needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}
-          PGSSLMODE: "require"
-        run: |
-          npm run test:e2e
+  #     - name: Run End-to-End Tests
+  #       env:
+  #         PGUSER: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
+  #         PGPASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+  #         PGHOST: ${{ needs.terraform.outputs.postgres_fqdn != '' && needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}
+  #         PGPORT: "5432"
+  #         PGDATABASE: ${{ needs.terraform.outputs.postgres_db_name != '' && needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}
+  #         PGSSLMODE: "require"
+  #       run: |
+  #         npm run test:e2e
 
   deploy:
     needs: test

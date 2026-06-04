@@ -1,12 +1,9 @@
 import { db } from '$lib/db';
 import { fail } from '@sveltejs/kit';
-// Importujemy automatycznie wygenerowany typ dla akcji tej konkretnej strony
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
     try {
-        // Pobieramy wszystko z bazy. 
-        // UWAGA: Upewnij się, że masz w bazie tabele 'lists' oraz 'products'
         const listsResult = await db.query('SELECT * FROM lists'); 
         const productsResult = await db.query('SELECT * FROM products');
 
@@ -15,12 +12,11 @@ export const load: PageServerLoad = async () => {
             dbProducts: productsResult.rows
         };
     } catch (error) {
-        console.error("Błąd pobierania z bazy:", error);
+        console.error("Błąd pobierania z bazy (load):", error);
         return { dbLists: [], dbProducts: [] };
     }
 };
 
-// Jawnie wskazujemy TypeScriptowi, że ten obiekt to Actions
 export const actions: Actions = {
     register: async ({ request }) => {
         const data = await request.formData();
@@ -33,20 +29,17 @@ export const actions: Actions = {
 
         try {
             await db.query(
-                'INSERT INTO users (username, password) VALUES ($1, $2)',
+                'INSERT INTO users (id, username, password) VALUES (COALESCE((SELECT MAX(id) FROM users), 0) + 1, $1, $2)',
                 [username, password]
             );
             return { success: true };
         } catch (err: any) {
-            // Kluczowe linie do debugowania:
             console.error("!!! BŁĄD REJESTRACJI !!!", err);
             
-            // Wyciągamy kod błędu PostgreSQL (23505 to unikalny constraint / duplikacja)
             if (err.code === '23505') {
                 return fail(400, { error: 'Użytkownik o takiej nazwie już istnieje.' });
             }
 
-            // Jeśli to inny błąd (np. brak połączenia), przesyłamy jego treść na frontend
             return fail(500, { error: `Błąd bazy danych: ${err.message || err}` });
         }
     },
@@ -56,15 +49,20 @@ export const actions: Actions = {
         const username = data.get('username') as string;
         const password = data.get('password') as string;
 
-        const result = await db.query(
-            'SELECT * FROM users WHERE username = $1 AND password = $2',
-            [username, password]
-        );
+        try {
+            const result = await db.query(
+                'SELECT * FROM users WHERE username = $1 AND password = $2',
+                [username, password]
+            );
 
-        if (result.rows.length > 0) {
-            return { success: true, user: result.rows[0] };
-        } else {
-            return fail(400, { error: 'Niepoprawne dane logowania' });
+            if (result.rows.length > 0) {
+                return { success: true, user: result.rows[0] };
+            } else {
+                return fail(400, { error: 'Niepoprawne dane logowania.' });
+            }
+        } catch (err) {
+            console.error("BŁĄD LOGOWANIA:", err);
+            return fail(500, { error: 'Problem z połączeniem podczas logowania.' });
         }
     },
     
@@ -80,7 +78,7 @@ export const actions: Actions = {
             );
             return { success: true };
         } catch (err) {
-            console.error(err);
+            console.error("BŁĄD DELETE_LIST:", err);
             return fail(500, { error: 'Nie udało się usunąć listy.' });
         }
     },
@@ -97,14 +95,12 @@ export const actions: Actions = {
         }
 
         try {
-            // 1. Sprawdzamy czy produkt istnieje w słowniku 'products', jeśli nie - dodajemy go
             let prodResult = await db.query('SELECT id FROM products WHERE name = $1', [productName]);
             let productId;
 
             if (prodResult.rows.length === 0) {
-                // Jeśli Twoje ID nie jest SERIAL, przed tym zapytaniem trzeba wyciągnąć MAX(id)+1
                 const insertProd = await db.query(
-                    'INSERT INTO products (name) VALUES ($1) RETURNING id',
+                    'INSERT INTO products (id, name) VALUES (COALESCE((SELECT MAX(id) FROM products), 0) + 1, $1) RETURNING id',
                     [productName]
                 );
                 productId = insertProd.rows[0].id;
@@ -112,18 +108,16 @@ export const actions: Actions = {
                 productId = prodResult.rows[0].id;
             }
 
-            // 2. Wstawiamy relację do tabeli 'lists'
-            // ON CONFLICT chroni przed duplikacją klucza złożonego (owner, list, product)
             await db.query(`
                 INSERT INTO lists (owner, list, product, quantity) 
                 VALUES ($1, $2, $3, $4)
                 ON CONFLICT (owner, list, product) 
                 DO UPDATE SET quantity = lists.quantity + EXCLUDED.quantity
             `, [ownerId, listId, productId, quantity]);
-
+            
             return { success: true };
         } catch (err) {
-            console.error(err);
+            console.error("BŁĄD W ADD_PRODUCT:", err);
             return fail(500, { error: 'Błąd podczas dodawania produktu.' });
         }
     },
@@ -141,7 +135,7 @@ export const actions: Actions = {
             );
             return { success: true };
         } catch (err) {
-            console.error(err);
+            console.error("BŁĄD DELETE_PRODUCT:", err);
             return fail(500, { error: 'Nie udało się usunąć produktu.' });
         }
     },
@@ -159,12 +153,15 @@ export const actions: Actions = {
         }
 
         try {
-            // 1. Znajdź lub stwórz ID dla nowej nazwy produktu
+            // 1. Znajdź lub stwórz ID dla nowej nazwy produktu (ZABEZPIECZONE przed brakiem SERIAL)
             let prodResult = await db.query('SELECT id FROM products WHERE name = $1', [newProductName]);
             let newProductId;
 
             if (prodResult.rows.length === 0) {
-                const insertProd = await db.query('INSERT INTO products (name) VALUES ($1) RETURNING id', [newProductName]);
+                const insertProd = await db.query(
+                    'INSERT INTO products (id, name) VALUES (COALESCE((SELECT MAX(id) FROM products), 0) + 1, $1) RETURNING id',
+                    [newProductName]
+                );
                 newProductId = insertProd.rows[0].id;
             } else {
                 newProductId = prodResult.rows[0].id;
@@ -178,7 +175,7 @@ export const actions: Actions = {
                     [newQuantity, ownerId, listId, oldProductId]
                 );
             } else {
-                // Zmienił się produkt -> usuwamy stary wpis i nadpisujemy nowym (lub łączymy ilości)
+                // Zmienił się produkt -> usuwamy stary wpis i nadpisujemy nowym
                 await db.query('DELETE FROM lists WHERE owner = $1 AND list = $2 AND product = $3', [ownerId, listId, oldProductId]);
                 await db.query(`
                     INSERT INTO lists (owner, list, product, quantity)
@@ -190,7 +187,7 @@ export const actions: Actions = {
 
             return { success: true };
         } catch (err) {
-            console.error(err);
+            console.error("BŁĄD EDIT_PRODUCT:", err);
             return fail(500, { error: 'Modyfikacja nie powiodła się.' });
         }
     }

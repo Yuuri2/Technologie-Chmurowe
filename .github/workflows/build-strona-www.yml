@@ -153,6 +153,7 @@ jobs:
   deploy:
     needs: [migrate, build, terraform]
     if: >-
+      always() &&
       needs.build.result == 'success' &&
       needs.migrate.result != 'failure' &&
       needs.terraform.result == 'success'

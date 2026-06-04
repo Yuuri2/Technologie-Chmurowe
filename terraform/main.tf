@@ -30,7 +30,7 @@ variable "webapp_name" {
 
 resource "azurerm_resource_group" "rg" {
   name     = "TerraTC"
-  location = "PolandCentral"
+  location = "westeurope"
 }
 
 resource "azurerm_service_plan" "web" {

@@ -49,7 +49,7 @@ resource "azurerm_service_plan" "web" {
 }
 
 resource "azurerm_postgresql_flexible_server" "baza" {
-  name                          = "postrgresbaza"
+  name                          = "turbopostrgresbaza"
   resource_group_name           = azurerm_resource_group.rg.name
   location                      = azurerm_resource_group.rg.location
   version                       = "13"

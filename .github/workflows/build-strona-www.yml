@@ -38,7 +38,6 @@ jobs:
               - 'strona-www/migrations/**'
 
   terraform:
-    needs: changes
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -152,7 +151,7 @@ jobs:
         run: npx node-pg-migrate up
 
   deploy:
-    needs: [changes, migrate, build, terraform]
+    needs: [migrate, build, terraform]
     if: >-
       needs.build.result == 'success' &&
       needs.migrate.result != 'faliure' &&

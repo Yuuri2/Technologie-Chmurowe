@@ -39,12 +39,12 @@ jobs:
 
   terraform:
     needs: changes
-    runs-on: ubuntu-latest
     if: >-
       needs.changes.outputs.terraform == 'true' || 
       needs.changes.outputs.webapp == 'true' || 
       needs.changes.outputs.migrations == 'true' || 
       github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: terraform
@@ -89,11 +89,11 @@ jobs:
 
   build:
     needs: [changes, terraform]
-    runs-on: ubuntu-latest
     if: >-
       always() &&
       needs.terraform.result != 'failure' &&
       (needs.changes.outputs.terraform == 'true' || needs.changes.outputs.webapp == 'true' || needs.changes.outputs.migrations == 'true' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: strona-www
@@ -132,6 +132,7 @@ jobs:
 
   migrate:
     needs: [changes, terraform]
+    if: ${{  needs.changes.outputs.migrations == 'true' || needs.terraform.outputs == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:

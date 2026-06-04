@@ -17,11 +17,9 @@ permissions:
 jobs:
   changes:
     runs-on: ubuntu-latest
-
     outputs:
       terraform: ${{ steps.filter.outputs.terraform }}
       webapp: ${{ steps.filter.outputs.webapp }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,11 +38,9 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     if: needs.changes.outputs.terraform == 'true'
-
     defaults:
       run:
         working-directory: terraform
-
     env:
       TF_IN_AUTOMATION: true
       TF_VAR_postgres_admin_login: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
@@ -54,11 +50,9 @@ jobs:
       ARM_CLIENT_SECRET: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
       ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
       ARM_TENANT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
-      
     outputs:
       postgres_fqdn: ${{ steps.expose_outputs.outputs.postgres_fqdn }}
       postgres_db_name: ${{ steps.expose_outputs.outputs.postgres_db_name }}
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -93,11 +87,9 @@ jobs:
       always() &&
       needs.terraform.result != 'failure' &&
       (needs.changes.outputs.terraform == 'true' || needs.changes.outputs.webapp == 'true' || github.event_name == 'workflow_dispatch')
-
     defaults:
       run:
         working-directory: strona-www
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -130,14 +122,10 @@ jobs:
           name: strona-www-webapp
           path: strona-www-webapp.zip
           if-no-files-found: error
-  
+
   migrate:
-    needs: [changes, terraform, build]
+    needs: build
     runs-on: ubuntu-latest
-    if: >-
-      always() &&
-      needs.build.result == 'success' &&
-      needs.terraform.result != 'failure'
     defaults:
       run:
         working-directory: strona-www
@@ -152,36 +140,41 @@ jobs:
 
       - name: Install Dependencies (Including node-pg-migrate)
         run: npm ci
-      
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run Database Migrations
-        env:
-          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
-        run: npx node-pg-migrate up
-
-      - name: Run End-to-End Tests
-        env:
-          # SvelteKit w trybie produkcyjnym/preview wymaga dokładnej nazwy zmiennej, którą masz w kodzie (np. DATABASE_URL)
-          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
-        run: |
-          export DATABASE_URL="${{ env.DATABASE_URL }}"
-          npm run test:e2e
 
       - name: Run Database Migrations
         env:
           DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}/${{ needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}?ssl=true
         run: npx node-pg-migrate up
 
-  deploy:
-    needs: [changes, terraform, build, migrate]
+  test:
+    needs: migrate
     runs-on: ubuntu-latest
-    if: >-
-      always() &&
-      needs.build.result == 'success' &&
-      needs.terraform.result != 'failure'
+    defaults:
+      run:
+        working-directory: strona-www
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Dependencies
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run End-to-End Tests
+        env:
+          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}/${{ needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}?ssl=true
+        run: npm run test:e2e
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

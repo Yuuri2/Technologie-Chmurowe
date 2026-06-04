@@ -25,6 +25,7 @@
     if (!form) return;
 
     if (form.success) {
+        console.log("coś się stało")
         // 1. Akcja LOGOWANIA (zwraca obiekt 'user')
         if (form.user) {
             currentUser = form.user;

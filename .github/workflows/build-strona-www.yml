@@ -148,6 +148,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+<<<<<<< HEAD
       - name: Run Database Migrations
         env:
           PGUSER: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
@@ -193,6 +194,13 @@ jobs:
   #         PGSSLMODE: "require"
   #       run: |
   #         npm run test:e2e
+=======
+      # ⬇️ Executes migrations using variables mapped directly from Secrets, Vars, and Terraform
+      - name: Run Database Migrations
+        env:
+          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn || 'postrgresbaza.postgres.database.azure.com' }}/postgres?ssl=true
+        run: npx node-pg-migrate up
+>>>>>>> parent of fb9b0e9 (Added e2e tests using Playwright)
 
   deploy:
     needs: [changes, terraform, migrate, build]

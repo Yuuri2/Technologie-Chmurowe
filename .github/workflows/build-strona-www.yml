@@ -20,6 +20,7 @@ jobs:
     outputs:
       terraform: ${{ steps.filter.outputs.terraform }}
       webapp: ${{ steps.filter.outputs.webapp }}
+      migrations: ${{ steps.filter.outputs.migrations }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,6 +34,8 @@ jobs:
               - 'terraform/**'
             webapp:
               - 'strona-www/**'
+            migrations:
+              - 'strona-www/migrations/**'
 
   terraform:
     needs: changes
@@ -86,7 +89,7 @@ jobs:
     if: >-
       always() &&
       needs.terraform.result != 'failure' &&
-      (needs.changes.outputs.terraform == 'true' || needs.changes.outputs.webapp == 'true' || github.event_name == 'workflow_dispatch')
+      (needs.changes.outputs.terraform == 'true' || needs.changes.outputs.webapp == 'true' || needs.changes.outputs.migrations == 'true' || github.event_name == 'workflow_dispatch')
     defaults:
       run:
         working-directory: strona-www

@@ -133,11 +133,6 @@ jobs:
   migrate:
     needs: [changes, build, terraform]
     runs-on: ubuntu-latest
-    if: >-
-      always() &&
-      needs.build.result == 'success' &&
-      needs.terraform.result != 'failure' &&
-      (needs.changes.outputs.migrations == 'true' || needs.changes.outputs.terraform == 'true' || github.event_name == 'workflow_dispatch')
     defaults:
       run:
         working-directory: strona-www

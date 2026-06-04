@@ -1,5 +1,5 @@
 <script lang="ts">
-    window.alert("login")
+    alert("login")
 </script>
 <div>
     <h1>login</h1>

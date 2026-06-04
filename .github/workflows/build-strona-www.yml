@@ -131,8 +131,13 @@ jobs:
           if-no-files-found: error
 
   migrate:
-    needs: [build, terraform] # ⬅️ POPRAWIONE: migrate musi słuchać terraform, żeby mieć dostęp do outputs
+    needs: [changes, build, terraform]
     runs-on: ubuntu-latest
+    if: >-
+      always() &&
+      needs.build.result == 'success' &&
+      needs.terraform.result != 'failure' &&
+      (needs.changes.outputs.migrations == 'true' || needs.changes.outputs.terraform == 'true' || github.event_name == 'workflow_dispatch')
     defaults:
       run:
         working-directory: strona-www
@@ -145,17 +150,26 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install Dependencies (Including node-pg-migrate)
+      - name: Install Dependencies
         run: npm ci
 
       - name: Run Database Migrations
         env:
-          DATABASE_URL: postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn }}/${{ needs.terraform.outputs.postgres_db_name }}?ssl=true
+          PGUSER: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
+          PGPASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          PGHOST: ${{ needs.terraform.outputs.postgres_fqdn != '' && needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}
+          PGPORT: "5432"
+          PGDATABASE: ${{ needs.terraform.outputs.postgres_db_name != '' && needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}
+          PGSSLMODE: "require"
         run: npx node-pg-migrate up
 
   test:
-    needs: [migrate, terraform]
+    needs: [terraform, migrate]
     runs-on: ubuntu-latest
+    if: >-
+      always() &&
+      needs.migrate.result != 'failure' &&
+      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
     defaults:
       run:
         working-directory: strona-www
@@ -174,10 +188,14 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      # Poprawiony krok: Wstrzykujemy DATABASE_URL bezpośrednio do środowiska wykonawczego powłoki (sh/bash)
       - name: Run End-to-End Tests
         env:
-          DATABASE_URL: "postgres://${{ secrets.POSTGRES_ADMIN_LOGIN }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.terraform.outputs.postgres_fqdn }}/${{ needs.terraform.outputs.postgres_db_name }}?ssl=true"
+          PGUSER: ${{ secrets.POSTGRES_ADMIN_LOGIN }}
+          PGPASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          PGHOST: ${{ needs.terraform.outputs.postgres_fqdn != '' && needs.terraform.outputs.postgres_fqdn || 'turbopostrgresbaza.postgres.database.azure.com' }}
+          PGPORT: "5432"
+          PGDATABASE: ${{ needs.terraform.outputs.postgres_db_name != '' && needs.terraform.outputs.postgres_db_name || 'turbopostrgresbaza' }}
+          PGSSLMODE: "require"
         run: |
           npm run test:e2e
 

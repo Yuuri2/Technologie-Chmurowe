@@ -154,8 +154,8 @@ jobs:
     needs: [migrate, build, terraform]
     if: >-
       needs.build.result == 'success' &&
-      needs.migrate.result != 'faliure' &&
-      needs.terraform.result != 'faliure'
+      needs.migrate.result != 'failure' &&
+      needs.terraform.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

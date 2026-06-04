@@ -195,7 +195,7 @@ jobs:
   #         npm run test:e2e
 
   deploy:
-    # needs: test
+    needs: [changes, terraform, migrate, build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

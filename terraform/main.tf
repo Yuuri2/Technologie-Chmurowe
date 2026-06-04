@@ -60,6 +60,12 @@ resource "azurerm_postgresql_flexible_server" "baza" {
   sku_name                      = "B_Standard_B1ms"
 }
 
+resource "azurerm_postgresql_flexible_server_configuration" "disable_ssl" {
+  name      = "require_secure_transport"
+  server_id = azurerm_postgresql_flexible_server.baza.id
+  value     = "OFF"
+}
+
 resource "azurerm_linux_web_app" "app" {
   name                = var.webapp_name
   resource_group_name = azurerm_resource_group.rg.name
@@ -87,11 +93,11 @@ resource "azurerm_linux_web_app" "app" {
   }
 }
 
-resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_github_runners" {
-  name             = "allow-azure-internal-networks"
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_all" {
+  name             = "allow-all-traffic"
   server_id        = azurerm_postgresql_flexible_server.baza.id
   start_ip_address = "0.0.0.0"
-  end_ip_address   = "0.0.0.0"
+  end_ip_address   = "255.255.255.255"
 }
 
 output "postgres_fqdn" {

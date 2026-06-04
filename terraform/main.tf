@@ -58,6 +58,12 @@ resource "azurerm_postgresql_flexible_server" "baza" {
   administrator_password        = var.postgres_admin_password
   storage_mb                    = 32768
   sku_name                      = "B_Standard_B1ms"
+
+  lifecycle {
+    ignore_changes = [
+      zone
+    ]
+  }
 }
 
 resource "azurerm_postgresql_flexible_server_configuration" "disable_ssl" {

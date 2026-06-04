@@ -11,7 +11,7 @@ export const shorthands = undefined;
 export const up = (pgm) => {
     // 1. Create Users Table
     pgm.createTable('users', {
-        id: { type: 'integer', primaryKey: true },
+        id: { type: 'serial', primaryKey: true },
         username: { type: 'varchar', notNull: true, unique: true },
         password: { type: 'varchar(255)', notNull: true }
     });

@@ -1,57 +1,47 @@
 <script lang="ts">
-    //selektor strony
-    let currentPage = $state('home');
+    import { enhance } from '$app/forms';
 
-    //dane trafiające do formularza
+    // 1. Odbieramy 'data' z funkcji load() oraz 'form' z akcji (login/register)
+    let { data, form } = $props();
+
+    let currentPage = $state('home');
     let username = $state('');
     let password = $state('');
     let passwordCheck = $state('');
 
-    //struktura mimikująca bazę
-    interface DbUser { id: number; username: string; password: string; }
-    interface DbProduct { id: number; name: string; }
-    interface DbList { owner: number; list: number; product: number; quantity: number; }
-    //konstruktor obiektu produkt
-    interface Product{
-        id: number;
-        productName: string;
-        quantity: number;
-    }
-    //przykładowe dane w bazie
-    let dbUsers = $state<DbUser[]>([
-        { id: 0, username: 'Adrian', password: '2137' },
-        { id: 1, username: 'Asag', password: '22' },
-        { id: 2, username: 'Teo', password: 'teorzechy' },
-        { id: 3, username: 'Zbigniew K', password: 'I<3Lodz' }
-    ]);
-
-    let dbProducts = $state<DbProduct[]>([
-        { id: 0, name: 'Orange' },
-        { id: 1, name: 'Bread' },
-        { id: 2, name: 'Tomato' }
-    ]);
-
-    let dbLists = $state<DbList[]>([
-        { owner: 1, list: 1, product: 0, quantity: 6 },
-        { owner: 3, list: 1, product: 1, quantity: 2 }
-    ]);
-
-    //Stan sesji
-    let currentUser = $state<DbUser | null>(null);
+    let currentUser = $state<{ id: number; username: string } | null>(null);
     let currentListId = $state<number | null>(null);
     let selectedListId = $state<number | null>(null);
     let selectedRowIndex = $state<number | null>(null);
     
-    //Zmienne do dodawania i edycji produktu
     let isAddingProduct = $state(false);
-    let isEditingProduct = $state(false)
+    let isEditingProduct = $state(false);
     let newName = $state('');
     let newQuantity = $state(1);
-    //Grupowanie list urzytkownika
+
+    // Reakcja na logowanie/rejestrację (to zostaje bez zmian)
+    $effect(() => {
+        if (form?.success) {
+            if (form.user) {
+                currentUser = form.user;
+                currentPage = 'selectList';
+                username = '';
+                password = '';
+            } else {
+                alert('Konto założone pomyślnie! Możesz się zalogować.');
+                currentPage = 'logIn';
+                passwordCheck = '';
+            }
+        } else if (form?.error) {
+            alert(form.error);
+        }
+    });
+
+    // 2. Grupowanie list - teraz czytamy z data.dbLists z PostgreSQL
     let userLists = $derived.by(() => {
         if (!currentUser) return [];
 
-        const myRecords = dbLists.filter(l => l.owner === currentUser!.id);
+        const myRecords = data.dbLists.filter(l => l.owner === currentUser!.id);
         const uniqueListIds = [...new Set(myRecords.map(l => l.list))];
         
         return uniqueListIds.map(id => {
@@ -64,14 +54,15 @@
             };
         });
     });
-    //produkty na liście
+
+    // 3. Produkty na liście - teraz czytamy z data.dbLists i data.dbProducts
     let productsView = $derived.by(() => {
         if (!currentUser || currentListId === null) return [];
-        return dbLists
+        return data.dbLists
             .map((record, index) => ({ record, index }))
             .filter(item => item.record.owner === currentUser!.id && item.record.list === currentListId)
             .map(item => {
-                const productDef = dbProducts.find(p => p.id === item.record.product);
+                const productDef = data.dbProducts.find(p => p.id === item.record.product);
                 return {
                     globalIndex: item.index,
                     productId: item.record.product,
@@ -81,50 +72,13 @@
             });
     });
 
-    //rejestracja
-    function RegistrationValidation(){
-        if (password === '' || passwordCheck === '') {
-            alert('Password is missing!');
-            return;
-        }
-        if (password === passwordCheck) {
-            // Przesyłanie do bazy
-            const nextUserId = dbUsers.length > 0 ? Math.max(...dbUsers.map(u => u.id)) + 1 : 0;
-            const newUser = { id: nextUserId, username, password };
-            dbUsers.push(newUser);
-            homePage();
-        }
-        else{
-            alert('Passwords are not identical');
-        }
-    }
-    //logowanie
-    function handleLogIn(){
-        //Sprawdzanie w bazie
-        const user = dbUsers.find(u => u.username === username && u.password === password);
-        if (user) {
-            currentUser = user;
-            listSelection();
-        } else {
-            alert("Niepoprawne dane");
-        }
-    }
-
     function toggleProduct(globalIndex: number){
-        if(selectedRowIndex === globalIndex){
-            selectedRowIndex = null;
-            return;
-        }
-        selectedRowIndex = globalIndex;
+        selectedRowIndex = selectedRowIndex === globalIndex ? null : globalIndex;
     }
 
     function toggleList(id: number){
-        if(selectedListId === id){
-            selectedListId = null;
-            return;
-        }
-        selectedListId = id;
-}
+        selectedListId = selectedListId === id ? null : id;
+    }
 
     function openList(listId: number) {
         currentListId = listId;
@@ -132,18 +86,21 @@
         productsPage();
     }
 
+    // --- SEKCJA DO PRZEBUDOWY NA FORMULARZE ---
+
     function createNewList() {
-        if (!currentUser) return;
-        const myRecords = dbLists.filter(l => l.owner === currentUser!.id);
-        const nextListId = myRecords.length > 0 ? Math.max(...myRecords.map(l => l.list)) + 1 : 1;
-        currentListId = nextListId;
-        productsPage();
-    }
+    if (!currentUser) return;
+    // Czytamy aktualne rekordy z bazy przekazane przez SvelteKit
+    const myRecords = data.dbLists.filter(l => l.owner === currentUser!.id);
+    const nextListId = myRecords.length > 0 ? Math.max(...myRecords.map(l => l.list)) + 1 : 1;
+    
+    currentListId = nextListId;
+    productsPage(); // Przekierowuje nas do pustego panelu nowej listy
+}
+
     function deleteList() {
-        if (!currentUser || selectedListId === null) return;
-        dbLists = dbLists.filter(i => !(i.list === selectedListId && i.owner === currentUser!.id));
-        
-        selectedListId = null;
+        // TODO: Akcja serwerowa "deleteList"
+        alert("Funkcja w przebudowie - wymaga połączenia z PostgreSQL!");
     }
 
     function addProduct(){
@@ -151,40 +108,23 @@
         newQuantity = 1;
         isAddingProduct = true;
     }
-    function loadProduct(){
-        if (newName.trim() === '') return;
 
-        let productDef = dbProducts.find(p => p.name.toLowerCase() === newName.trim().toLowerCase());
-        if (!productDef) {
-            const nextProdId = dbProducts.length > 0 ? Math.max(...dbProducts.map(p => p.id)) + 1 : 0;
-            productDef = { id: nextProdId, name: newName.trim() };
-            dbProducts.push(productDef);
-        }
-        const existingRecord = dbLists.find(l => l.owner === currentUser!.id && l.list === currentListId! && l.product === productDef!.id);
-        if (existingRecord) {
-            existingRecord.quantity += newQuantity;
-        } else {
-            dbLists.push({
-                owner: currentUser!.id,
-                list: currentListId!,
-                product: productDef.id,
-                quantity: newQuantity
-            });
-        }
+    function loadProduct(){
+        // TODO: Akcja serwerowa do INSERT INTO list_items
+        alert("Funkcja w przebudowie - wymaga połączenia z PostgreSQL!");
         isAddingProduct = false;
     }
+
     function deleteProduct(){
-        if (selectedRowIndex === null) return;
-        
-        dbLists = dbLists.filter((_, idx) => idx !== selectedRowIndex);
-        selectedRowIndex = null;
+        // TODO: Akcja serwerowa DELETE FROM
+        alert("Funkcja w przebudowie - wymaga połączenia z PostgreSQL!");
     }
+
     function startEdit() {
         if (selectedRowIndex === null) return;
-
-        const record = dbLists[selectedRowIndex];
+        const record = data.dbLists[selectedRowIndex];
         if (record) {
-            const productDef = dbProducts.find(p => p.id === record.product);
+            const productDef = data.dbProducts.find(p => p.id === record.product);
             newName = productDef ? productDef.name : '';
             newQuantity = record.quantity;
             isEditingProduct = true;
@@ -192,30 +132,17 @@
     }
 
     function editProduct(){
-        if (selectedRowIndex === null || newName.trim() === '' || !currentUser || currentListId === null) return;
-
-        let productDef = dbProducts.find(p => p.name.toLowerCase() === newName.trim().toLowerCase());
-        if (!productDef) {
-            const nextProdId = dbProducts.length > 0 ? Math.max(...dbProducts.map(p => p.id)) + 1 : 0;
-            productDef = { id: nextProdId, name: newName.trim() };
-            dbProducts.push(productDef);
-        }
-
-        dbLists[selectedRowIndex].product = productDef.id;
-        dbLists[selectedRowIndex].quantity = newQuantity;
-
+        // TODO: Akcja serwerowa UPDATE
+        alert("Funkcja w przebudowie - wymaga połączenia z PostgreSQL!");
         isEditingProduct = false;
-        selectedRowIndex = null;
     }
 
-    //Zmienianie sceny strony
-    function registerPage(){
-        currentPage = 'register';
-    }
-    function logInPage(){
-        currentPage = 'logIn';
-    }
-    function homePage(){
+    // --- NAWIGACJA ---
+    function registerPage() { currentPage = 'register'; }
+    function logInPage() { currentPage = 'logIn'; }
+    function productsPage() { currentPage = 'productList'; }
+    function listSelection() { currentPage = 'selectList'; }
+    function homePage() {
         currentPage = "home";
         username = '';
         password = '';
@@ -223,13 +150,6 @@
         currentUser = null;
         currentListId = null;
     }
-    function productsPage(){
-        currentPage = 'productList';
-    }
-    function listSelection(){
-        currentPage = 'selectList';
-    }
-
 </script>
 <div id="back">
     <div id="front">
@@ -246,24 +166,34 @@
         <div id="frontPageSign">
             <h1>Register!</h1>
         </div>
-        <div id="SignInBtnContainer">
-            <b>Username: </b><input class="UIInput" type="text" name="Name" bind:value={username}/>
-            <b>Password: </b><input class="UIInput" type="password" name="Password" bind:value={password}/>
-            <b>Confirm Password: </b><input class="UIInput" type="password" name="PasswordCheck" bind:value={passwordCheck}/>
-            <button class="UIButton SubmitBtn" onclick={RegistrationValidation}>Submit</button>
-            <button class="UIButton" onclick={homePage}>← Go back</button>
-        </div>
+        <form method="POST" action="?/register" use:enhance id="SignInBtnContainer">
+            <b>Username: </b>
+            <input class="UIInput" type="text" name="username" bind:value={username} required/>
+            
+            <b>Password: </b>
+            <input class="UIInput" type="password" name="password" bind:value={password} required/>
+            
+            <b>Confirm Password: </b>
+            <input class="UIInput" type="password" name="passwordCheck" bind:value={passwordCheck} required/>
+            
+            <button type="submit" class="UIButton SubmitBtn">Submit</button>
+            <button type="button" class="UIButton" onclick={homePage}>← Go back</button>
+        </form>
 
         {:else if currentPage === 'logIn'}
         <div id="frontPageSign">
             <h1>Sign In!</h1>
         </div>
-        <div id="SignInBtnContainer">
-            <b>Username: </b><input class="UIInput" type="text" name="Name" bind:value={username}/>
-            <b>Password: </b><input class="UIInput" type="password" name="Password" bind:value={password}/>
-            <button class="UIButton SubmitBtn" onclick={handleLogIn}>Submit</button>
-            <button class="UIButton" onclick={homePage}>← Go back</button>
-        </div>
+        <form method="POST" action="?/login" use:enhance id="SignInBtnContainer">
+            <b>Username: </b>
+            <input class="UIInput" type="text" name="username" bind:value={username} required/>
+            
+            <b>Password: </b>
+            <input class="UIInput" type="password" name="password" bind:value={password} required/>
+            
+            <button type="submit" class="UIButton SubmitBtn">Submit</button>
+            <button type="button" class="UIButton" onclick={homePage}>← Go back</button>
+        </form>
 
         {:else if currentPage === "selectList"}
         <div id="settingsPanel">
@@ -275,9 +205,14 @@
                 <button class="UIButton" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px;" onclick={createNewList}>
                     <b>+ Create New List</b>
                 </button>
-                <button class="UIButton" style="background-color: #a62443; height: 100%; width: 20%; border-radius: 10px;" onclick={deleteList}>
-                    <b>- Delete List</b>
-                </button>
+
+                <form method="POST" action="?/deleteList" use:enhance style="display: contents;">
+                    <input type="hidden" name="listId" value={selectedListId} />
+                    <input type="hidden" name="ownerId" value={currentUser?.id} />
+                    <button type="submit" class="UIButton" style="background-color: #a62443; height: 100%; width: 20%; border-radius: 10px;" disabled={selectedListId === null}>
+                        <b>- Delete List</b>
+                    </button>
+                </form>
             </div>
             
             <div class="listGrid">
@@ -303,7 +238,15 @@
         <div id="userPanel">
             <div id="controllPanel">
                 <button class="UIButton ButtonProductPage" style="background-color: #a2f2b8;" onclick={addProduct}><b>+</b></button>
-                <button class="UIButton ButtonProductPage" style="background-color: #a62443;" onclick={deleteProduct}><b>X</b></button>
+                <form method="POST" action="?/deleteProduct" use:enhance style="display: contents;">
+                    <input type="hidden" name="ownerId" value={currentUser?.id} />
+                    <input type="hidden" name="listId" value={currentListId} />
+                    <input type="hidden" name="productId" value={selectedRowIndex !== null ? data.dbLists[selectedRowIndex]?.product : ''} />
+                    
+                    <button type="submit" class="UIButton ButtonProductPage" style="background-color: #a62443;" disabled={selectedRowIndex === null}>
+                        <b>X</b>
+                    </button>
+                </form>
                 <button class="UIButton ButtonProductPage" style="background-color: #f7f3a1;" onclick={startEdit}>Edit</button>
             </div>
             <div id="productPanel">
@@ -321,51 +264,75 @@
                 {/each}
             </div>
         </div>
+        {/if}
 
         {#if isAddingProduct}
             <div class="modalOverlay">
-                <div class="modalBox">
+                <form method="POST" action="?/addProduct" use:enhance={() => {
+                    // Ta część wykonuje się PRZED wysłaniem (np. można tu włączyć loader)
+                    return async ({ result, update }) => {
+                        // Ta część wykonuje się PO odpowiedzi z serwera
+                        if (result.type === 'success') {
+                            isAddingProduct = false; // Zamknij modal tylko, gdy sukces
+                        }
+                        await update(); // Odświeża dane na stronie (data.dbLists, itd.)
+                    };
+                }} class="modalBox">
                     <h2>Add New Product</h2>
                     
+                    <input type="hidden" name="listId" value={currentListId} />
+                    <input type="hidden" name="ownerId" value={currentUser?.id} />
+
                     <div class="modalInputGroup">
                         <b>Product Name:</b>
-                        <input class="UIInput modalInput" type="text" placeholder="e.g. Milk" bind:value={newName} />
+                        <input class="UIInput modalInput" type="text" name="productName" placeholder="e.g. Milk" bind:value={newName} required />
                     </div>
 
                     <div class="modalInputGroup">
                         <b>Quantity:</b>
-                        <input class="UIInput modalInput" type="number" min="1" bind:value={newQuantity} />
+                        <input class="UIInput modalInput" type="number" name="quantity" min="1" bind:value={newQuantity} required />
                     </div>
 
                     <div class="modalActions">
-                        <button class="UIButton modalBtn save" onclick={loadProduct}>Save</button>
-                        <button class="UIButton modalBtn cancel" onclick={() => isAddingProduct = false}>Cancel</button>
+                        <button type="submit" class="UIButton modalBtn save">Save</button>
+                        <button type="button" class="UIButton modalBtn cancel" onclick={() => isAddingProduct = false}>Cancel</button>
                     </div>
-                </div>
+                </form>
             </div>
         {/if}
         {#if isEditingProduct}
             <div class="modalOverlay">
-                <div class="modalBox">
+                <form method="POST" action="?/editProduct" use:enhance={() => {
+                    return async ({ result, update }) => {
+                        if (result.type === 'success') {
+                            isEditingProduct = false;
+                            selectedRowIndex = null;
+                        }
+                        await update(); 
+                    };
+                }} class="modalBox">
                     <h2>Edit product</h2>
+                    
+                    <input type="hidden" name="listId" value={currentListId} />
+                    <input type="hidden" name="ownerId" value={currentUser?.id} />
+                    <input type="hidden" name="oldProductId" value={selectedRowIndex !== null ? data.dbLists[selectedRowIndex]?.product : ''} />
+
                     <div class="modalInputGroup">
                         <b>Product Name:</b>
-                        <input class="UIInput modalInput" type="text" bind:value={newName} />
+                        <input class="UIInput modalInput" type="text" name="productName" bind:value={newName} required />
                     </div>
 
                     <div class="modalInputGroup">
                         <b>Quantity:</b>
-                        <input class="UIInput modalInput" type="number" bind:value={newQuantity} />
+                        <input class="UIInput modalInput" type="number" name="quantity" min="1" bind:value={newQuantity} required />
                     </div>
 
                     <div class="modalActions">
-                        <button class="UIButton modalBtn save" onclick={editProduct}>Save</button>
-                        <button class="UIButton modalBtn cancel" onclick={() => isEditingProduct = false}>Cancel</button>
+                        <button type="submit" class="UIButton modalBtn save">Save</button>
+                        <button type="button" class="UIButton modalBtn cancel" onclick={() => isEditingProduct = false}>Cancel</button>
                     </div>
-                </div>
+                </form>
             </div>
-        {/if}
-
         {/if}
     </div>
 </div>

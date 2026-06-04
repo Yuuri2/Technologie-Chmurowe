@@ -18,7 +18,7 @@ export const up = (pgm) => {
 
     // 2. Create Products Table
     pgm.createTable('products', {
-        id: { type: 'integer', primaryKey: true },
+        id: { type: 'serial', primaryKey: true },
         name: { type: 'varchar', notNull: true, unique: true }
     });
 

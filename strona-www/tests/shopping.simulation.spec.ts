@@ -18,18 +18,19 @@ test.describe('Shopping List App - E2E Flow', () => {
         await page.fill('form[action="?/register"] input[name="password"]', 'Tajny@kod123');
         await page.fill('form[action="?/register"] input[name="passwordCheck"]', 'Tajny@kod123');
 
-        // Obsługa okna alert (musi być zadeklarowana PRZED kliknięciem)
-        page.on('dialog', async dialog => {
-            expect(dialog.message()).toContain('Konto założone pomyślnie');
-            await dialog.accept();
-        });
+        // Przygotowujemy obietnicę przechwycenia TYLKO jednego, najbliższego alertu
+        const dialogPromise = page.waitForEvent('dialog');
 
-        // 2. Klikamy rejestrację i czekamy na przełączenie widoku
+        // 2. Klikamy rejestrację
         await page.click('form[action="?/register"] button[type="submit"]');
 
-        // 3. Czekamy, aż nagłówek zmieni się na "Sign In!" i upewniamy się, że stary formularz zniknął
+        // Czekamy na alert rejestracji, sprawdzamy go i zamykamy
+        const dialog = await dialogPromise;
+        expect(dialog.message()).toContain('Konto założone pomyślnie');
+        await dialog.accept();
+
+        // 3. Czekamy, aż nagłówek zmieni się na "Sign In!" i stary formularz zniknie
         await expect(page.locator('h1')).toContainText('Sign In!');
-        // POPRAWKA: Prawidłowa asercja w Playwright to .toBeHidden()
         await expect(page.locator('form[action="?/register"]')).toBeHidden(); 
 
         // 4. Dopiero teraz bezpiecznie wypełniamy logowanie

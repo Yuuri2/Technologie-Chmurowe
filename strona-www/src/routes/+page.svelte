@@ -1,7 +1,7 @@
 <script lang="ts">
     import { enhance } from '$app/forms';
-    import type { SubmitFunction } from '$app/forms';
 
+    // 1. Odbieramy 'data' z funkcji load() oraz 'form' z akcji (login/register)
     let { data, form } = $props();
 
     let currentPage = $state('home');
@@ -19,64 +19,42 @@
     let newName = $state('');
     let newQuantity = $state(1);
 
-    // --- FUNKCJE OBSŁUGI FORMULARZY (use:enhance) ---
+    // Reakcja na logowanie/rejestrację (to zostaje bez zmian)
+    $effect(() => {
+    // Jeśli nie ma obiektu form, nic nie rób
+    if (!form) return;
 
-    const submitRegister: SubmitFunction = ({ formData, cancel }) => {
-        if (formData.get('password') !== formData.get('passwordCheck')) {
-            alert('Hasła nie są identyczne!');
-            cancel(); 
+    if (form.success) {
+        // 1. Akcja LOGOWANIA (zwraca obiekt 'user')
+        if (form.user) {
+            currentUser = form.user;
+            currentPage = 'selectList';
+            username = '';
+            password = '';
+        } 
+        // 2. Akcja REJESTRACJI 
+        // Sprawdzamy, czy jesteśmy na stronie rejestracji, żeby nie przechwycić sukcesu z dodawania produktów
+        else if (currentPage === 'register') {
+            alert('Konto założone pomyślnie! Możesz się zalogować.');
+            currentPage = 'logIn';
+            passwordCheck = '';
         }
-
-        return async ({ result, update }) => {
-            if (result.type === 'success') {
-                alert('Konto założone pomyślnie! Możesz się zalogować.');
-                currentPage = 'logIn';
-                passwordCheck = '';
-            } else if (result.type === 'failure') {
-                // @ts-ignore
-                alert(result.data?.error || 'Wystąpił błąd podczas rejestracji.');
+        // 3. Pozostałe akcje (addProduct, deleteList itp.)
+        else {
+            // Tutaj możesz dodać opcjonalny kod, np. czyszczenie zaznaczenia w tabeli po usunięciu
+            if (currentPage === 'selectList') {
+                selectedListId = null; 
             }
-            await update({ reset: false });
-        };
-    };
-
-    const submitLogin: SubmitFunction = () => {
-        return async ({ result, update }) => {
-            if (result.type === 'success') {
-                // @ts-ignore
-                currentUser = result.data?.user;
-                currentPage = 'selectList';
-                username = '';
-                password = '';
-            } else if (result.type === 'failure') {
-                // @ts-ignore
-                alert(result.data?.error || 'Nie udało się zalogować.');
-            }
-            await update({ reset: false });
-        };
-    };
-
-    const submitAddProduct: SubmitFunction = () => {
-        return async ({ result, update }) => {
-            if (result.type === 'success') {
-                isAddingProduct = false;
-            }
-            await update();
-        };
-    };
-
-    const submitEditProduct: SubmitFunction = () => {
-        return async ({ result, update }) => {
-            if (result.type === 'success') {
-                isEditingProduct = false;
+            if (currentPage === 'productList') {
                 selectedRowIndex = null;
             }
-            await update(); 
-        };
-    };
+        }
+    } else if (form.error) {
+        alert(form.error);
+    }
+});
 
-    // --- GRUPOWANIE LIST I PRODUKTÓW ---
-
+    // 2. Grupowanie list - teraz czytamy z data.dbLists z PostgreSQL
     let userLists = $derived.by(() => {
         if (!currentUser) return [];
 
@@ -94,6 +72,7 @@
         });
     });
 
+    // 3. Produkty na liście - teraz czytamy z data.dbLists i data.dbProducts
     let productsView = $derived.by(() => {
         if (!currentUser || currentListId === null) return [];
         return data.dbLists
@@ -110,8 +89,6 @@
             });
     });
 
-    // --- LOGIKA UI I NAWIGACJA ---
-
     function toggleProduct(globalIndex: number){
         selectedRowIndex = selectedRowIndex === globalIndex ? null : globalIndex;
     }
@@ -126,14 +103,17 @@
         productsPage();
     }
 
+    // --- SEKCJA DO PRZEBUDOWY NA FORMULARZE ---
+
     function createNewList() {
-        if (!currentUser) return;
-        const myRecords = data.dbLists.filter(l => l.owner === currentUser!.id);
-        const nextListId = myRecords.length > 0 ? Math.max(...myRecords.map(l => l.list)) + 1 : 1;
-        
-        currentListId = nextListId;
-        productsPage(); 
-    }
+    if (!currentUser) return;
+    // Czytamy aktualne rekordy z bazy przekazane przez SvelteKit
+    const myRecords = data.dbLists.filter(l => l.owner === currentUser!.id);
+    const nextListId = myRecords.length > 0 ? Math.max(...myRecords.map(l => l.list)) + 1 : 1;
+    
+    currentListId = nextListId;
+    productsPage(); // Przekierowuje nas do pustego panelu nowej listy
+}
 
     function addProduct(){
         newName = '';
@@ -152,6 +132,7 @@
         }
     }
 
+    // --- NAWIGACJA ---
     function registerPage() { currentPage = 'register'; }
     function logInPage() { currentPage = 'logIn'; }
     function productsPage() { currentPage = 'productList'; }
@@ -165,7 +146,6 @@
         currentListId = null;
     }
 </script>
-
 <div id="back">
     <div id="front">
         {#if currentPage === 'home'}
@@ -181,7 +161,7 @@
         <div id="frontPageSign">
             <h1>Register!</h1>
         </div>
-        <form method="POST" action="?/register" use:enhance={submitRegister} id="SignInBtnContainer">
+        <form method="POST" action="?/register" use:enhance id="SignInBtnContainer">
             <b>Username: </b>
             <input class="UIInput" type="text" name="username" bind:value={username} required/>
             
@@ -199,7 +179,7 @@
         <div id="frontPageSign">
             <h1>Sign In!</h1>
         </div>
-        <form method="POST" action="?/login" use:enhance={submitLogin} id="SignInBtnContainer">
+        <form method="POST" action="?/login" use:enhance id="SignInBtnContainer">
             <b>Username: </b>
             <input class="UIInput" type="text" name="username" bind:value={username} required/>
             
@@ -283,7 +263,16 @@
 
         {#if isAddingProduct}
             <div class="modalOverlay">
-                <form method="POST" action="?/addProduct" use:enhance={submitAddProduct} class="modalBox">
+                <form method="POST" action="?/addProduct" use:enhance={() => {
+                    // Ta część wykonuje się PRZED wysłaniem (np. można tu włączyć loader)
+                    return async ({ result, update }) => {
+                        // Ta część wykonuje się PO odpowiedzi z serwera
+                        if (result.type === 'success') {
+                            isAddingProduct = false; // Zamknij modal tylko, gdy sukces
+                        }
+                        await update(); // Odświeża dane na stronie (data.dbLists, itd.)
+                    };
+                }} class="modalBox">
                     <h2>Add New Product</h2>
                     
                     <input type="hidden" name="listId" value={currentListId} />
@@ -308,7 +297,15 @@
         {/if}
         {#if isEditingProduct}
             <div class="modalOverlay">
-                <form method="POST" action="?/editProduct" use:enhance={submitEditProduct} class="modalBox">
+                <form method="POST" action="?/editProduct" use:enhance={() => {
+                    return async ({ result, update }) => {
+                        if (result.type === 'success') {
+                            isEditingProduct = false;
+                            selectedRowIndex = null;
+                        }
+                        await update(); 
+                    };
+                }} class="modalBox">
                     <h2>Edit product</h2>
                     
                     <input type="hidden" name="listId" value={currentListId} />
@@ -334,7 +331,6 @@
         {/if}
     </div>
 </div>
-
 <style>
 :global(body){
     margin: 0;

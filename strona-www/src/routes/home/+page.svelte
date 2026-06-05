@@ -2,7 +2,6 @@
     let { data } = $props();
 </script>
 <div>
-    home
-    <h1>{data.user.id}</h1>
-    <h1>{data.user.username}</h1>
+    <h1>home</h1>
+    <h3>{data.user}</h3>
 </div>

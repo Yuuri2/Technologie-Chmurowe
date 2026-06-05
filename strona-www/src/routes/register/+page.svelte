@@ -2,7 +2,7 @@
     import { enhance } from "$app/forms";
     let { form } = $props();
 </script>
-<h1>register</h1>
+<h1>Register</h1>
 <form method="POST" use:enhance>
     {#if form?.error}
         <p color="red">{form.error}</p>

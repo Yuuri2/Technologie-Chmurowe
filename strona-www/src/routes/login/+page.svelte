@@ -1,11 +1,19 @@
 <script lang="ts">
-    console.log("login");
-
-    let login = ()=>{alert('login')}
+    import { enhance } from "$app/forms";
+    let { form } = $props();
 </script>
-<div>
-    <h1>login</h1>
-    <button onclick={login}>
-        login
-    </button>
-</div>
+<h1>Login</h1>
+<form method="POST" use:enhance>
+    {#if form?.error}
+        <p color="red">{form.error}</p>
+    {/if}
+    <div>
+        <label for="username">Login:</label>
+        <input type="text" name="username" id="username" required minlength="3">
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" name="password" id="password" required minlength="3">
+    </div>
+    <button type="submit">Login</button>
+</form>

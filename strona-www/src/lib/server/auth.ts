@@ -23,36 +23,41 @@ export async function createSession(userId: number, daysToLive: number = 7): Pro
     return token;
 }
 
+
 export async function authenticateUser(token: string): Promise<user | null> {
+    // 1. Zmieniamy zapytanie na prostsze i bezpieczniejsze.
+    // Pobieramy TYLKO to, co absolutnie niezbędne, bez aliasów, które mogą mieszać w wielkości liter.
     const query = `
         SELECT 
-            s.id AS session_id,
-            s.expires_at,
-            u.id AS user_id,
-            u.username
-        FROM sessions s
-        JOIN users u ON s.user_id = u.id
-        WHERE s.token = $1
+            sessions.expires_at,
+            users.id,
+            users.username
+        FROM sessions
+        JOIN users ON sessions.user_id = users.id
+        WHERE sessions.token = $1
         LIMIT 1;
     `;
+    
     try {
-        const result = await pool.query(query, [token])
-        if(result.rows.length === 0) {
+        const result = await pool.query(query, [token]);
+        
+        if (result.rows.length === 0) {
             return null;
         }
 
-        const sessionData = result.rows[0];
+        const row = result.rows[0];
 
         const now = new Date();
-        if(now > new Date(sessionData.expires_at)) {
-            await deleteSession(token)
+        if (now > new Date(row.expires_at)) {
+            await deleteSession(token);
             return null;
         }
 
         return {
-            id: sessionData.user_id,
-            username: sessionData.username
-        }
+            id: Number(row.id),
+            username: String(row.username)
+        };
+
     } catch (error: any) {
         console.error(error.toString());
         return null;

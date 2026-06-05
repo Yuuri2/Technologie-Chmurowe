@@ -43,6 +43,6 @@ export const actions: Actions = {
             return fail(500, {error: "błąd server przy rejestracji"});
         }
 
-        throw redirect(303, "/");
+        throw redirect(303, "/home");
     }
 }

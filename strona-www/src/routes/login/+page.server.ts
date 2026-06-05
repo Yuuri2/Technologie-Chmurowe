@@ -37,6 +37,6 @@ export const actions: Actions = {
             return fail(500, {error: "błąd serwera"});
         }
 
-        throw redirect(303, "/");
+        throw redirect(303, "/home");
     }
 }

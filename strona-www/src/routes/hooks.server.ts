@@ -11,10 +11,10 @@ export const handle: Handle = async ({event, resolve}) => {
             event.locals.user = user;
         } else {
             event.cookies.delete("session", { path: '/' });
-            event.locals.user = null;
+            event.locals.user = undefined;
         }
     } else {
-        event.locals.user = null;
+        event.locals.user = undefined;
     }
 
     const response = await resolve(event);

@@ -24,9 +24,7 @@ export async function createSession(userId: number, daysToLive: number = 7): Pro
 }
 
 
-export async function authenticateUser(token: string): Promise<user | null> {
-    // 1. Zmieniamy zapytanie na prostsze i bezpieczniejsze.
-    // Pobieramy TYLKO to, co absolutnie niezbędne, bez aliasów, które mogą mieszać w wielkości liter.
+export async function authenticateUser(token: string): Promise<user | undefined> {
     const query = `
         SELECT 
             sessions.expires_at,
@@ -42,7 +40,7 @@ export async function authenticateUser(token: string): Promise<user | null> {
         const result = await pool.query(query, [token]);
         
         if (result.rows.length === 0) {
-            return null;
+            return undefined;
         }
 
         const row = result.rows[0];
@@ -50,7 +48,7 @@ export async function authenticateUser(token: string): Promise<user | null> {
         const now = new Date();
         if (now > new Date(row.expires_at)) {
             await deleteSession(token);
-            return null;
+            return undefined;
         }
 
         return {
@@ -60,7 +58,7 @@ export async function authenticateUser(token: string): Promise<user | null> {
 
     } catch (error: any) {
         console.error(error.toString());
-        return null;
+        return undefined;
     }
 }
 

@@ -8,7 +8,7 @@
 </script>
 <div>
     <h1>home</h1><LogoutButton></LogoutButton>
-    <form method="POST" action="/home/createList" use:enhance>
+    <form method="POST" action="?/create" use:enhance>
         <input type="text" name="nazwa" id="nazwa">
         <button type="submit">stwórz</button>
         {#if form?.error}
@@ -19,6 +19,10 @@
         <div>
             <h4>{list.nazwa}</h4>
             <a href="/products/{list.id}">&#8594;</a>
+            <form action="?/delete" method="POST" use:enhance>
+                <input type="hidden" name="id" value="{list.id}">
+                <button type="submit">X</button>
+            </form>
         </div>
     {/each}
 </div>

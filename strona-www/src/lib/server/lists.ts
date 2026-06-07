@@ -22,3 +22,14 @@ export async function CreateUserList(userId: number, name: string): Promise<numb
     const result = await pool.query(query, [userId, name]);
     return result.rows[0].id;
 }
+
+export async function removeUserList(userId: number, listId: number): Promise<boolean> {
+    const query = `
+        DELETE FROM lista 
+        WHERE id = $1 AND user_id = $2
+    `;
+    
+    const result = await pool.query(query, [listId, userId]);
+
+    return result.rowCount === 1;
+}

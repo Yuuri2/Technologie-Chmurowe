@@ -7,7 +7,7 @@
         error?: string;
         createdListId?: number;
     }
-    
+
     let { data, form }: { data: PageData, form: CreateListActionData | null } = $props();
 </script>
 <div>

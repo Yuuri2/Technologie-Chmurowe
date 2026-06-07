@@ -29,7 +29,7 @@
                         <h4>{list.nazwa}</h4>
                         <form action="?/delete" style="background-color: #a62443; width: 30%; height: 30%" method="POST" use:enhance >
                             <input type="hidden" name="id" value={list.id}>
-                            <button type="submit""><b>X</b></button>
+                            <button type="submit"><b>X</b></button>
                         </form>
                     </div>
                 {:else}

@@ -14,8 +14,8 @@
         </div>
         <div id="userPanel">
             <form method="POST" action="?/create" use:enhance>
-                <input type="text" name="nazwa" id="nazwa">
-                <button type="submit"><b>+ Create New List</b></button>
+                <input type="text" class="UIInput" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px; font-size:large;" name="nazwa" id="nazwa">
+                <button type="submit" class="UIButton" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px;"><b>+ Create New List</b></button>
                 {#if form?.error}
                     <p style="color: red;" >{form.error}</p>
                 {/if}

@@ -57,7 +57,7 @@
 
     // 2. Grupowanie list - teraz czytamy z data.dbLists z PostgreSQL
     let userLists = $derived.by(() => {
-        if (!currentUser) return [];
+        if (!currentUser) return;
 
         const myRecords = data.dbLists.filter(l => l.owner === currentUser!.id);
         const uniqueListIds = [...new Set(myRecords.map(l => l.list))];

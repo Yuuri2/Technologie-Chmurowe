@@ -4,7 +4,9 @@
 </script>
 <div>
     <h1>home</h1>
-    <h3>{data.user.id}</h3>
-    <h3>{data.user.username}</h3>
     <LogoutButton></LogoutButton>
+    {#each data.lists as list }
+        <h4>{list.nazwa}</h4>
+        <a href="/products/{list.id}">&#8594;</a>
+    {/each}
 </div>

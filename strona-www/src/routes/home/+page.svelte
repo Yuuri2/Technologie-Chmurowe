@@ -1,7 +1,14 @@
 <script lang="ts">
     import LogoutButton from "$lib/components/LogoutButton.svelte";
     import { enhance } from "$app/forms";
-    let { data, form } = $props();
+    import type { PageData } from './$types';
+
+    interface CreateListActionData {
+        error?: string;
+        createdListId?: number;
+    }
+    
+    let { data, form }: { data: PageData, form: CreateListActionData | null } = $props();
 </script>
 <div>
     <h1>home</h1><LogoutButton></LogoutButton>

@@ -10,6 +10,9 @@
             <h1>Register!</h1>
         </div>
         <form method="POST" use:enhance id="SignInBtnContainer">
+            {#if form?.error}
+                <p color="red">{form.error}</p>
+            {/if}
             <b>Username: </b>
             <input type="text" name="username" class="UIInput" required minlength="3">
 

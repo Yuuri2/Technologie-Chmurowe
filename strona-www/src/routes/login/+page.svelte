@@ -9,7 +9,7 @@
         <div id="frontPageSign">
             <h1>Sign In!</h1>
         </div>
-        <form method="POST" use:enhance>
+        <form method="POST" use:enhance id="SignInBtnContainer">
         {#if form?.error}
             <p color="red">{form.error}</p>
         {/if}

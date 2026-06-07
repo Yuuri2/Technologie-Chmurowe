@@ -2,13 +2,9 @@
     import LogoutButton from "$lib/components/LogoutButton.svelte";
     import { enhance } from "$app/forms";
     import type { PageData } from './$types';
+    import type { ActionData } from "./createList/$types";
 
-    interface CreateListActionData {
-        error?: string;
-        createdListId?: number;
-    }
-
-    let { data, form }: { data: PageData, form: CreateListActionData | null } = $props();
+    let { data, form }: { data: PageData, form: ActionData | null } = $props();
 </script>
 <div>
     <h1>home</h1><LogoutButton></LogoutButton>

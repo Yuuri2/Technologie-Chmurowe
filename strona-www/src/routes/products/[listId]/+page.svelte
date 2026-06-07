@@ -138,7 +138,7 @@
                         <b>Quantity:</b>
                         <input class="UIInput modalInput" type="number" name="quantity" min="1" bind:value={tempQuant} required />
                     </div>
-
+                    <input type="hidden" name="productId" value="{selectedRowIndex}">
                     <div class="modalActions">
                         <button type="submit" class="UIButton modalBtn save">Save</button>
                         <button type="button" class="UIButton modalBtn cancel" onclick={() => isEditing = false}>Cancel</button>

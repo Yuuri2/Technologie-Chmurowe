@@ -17,6 +17,7 @@ export const actions: Actions = {
         const user = requireAuth(locals);
         const data = await request.formData();
         const listId = Number(data.get("id"));
+
         if(!listId) {
             return fail(400, {error: "nie podales id listy"});
         }

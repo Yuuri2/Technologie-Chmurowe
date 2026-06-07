@@ -1,17 +1,15 @@
 <script lang="ts">
     import LogoutButton from "$lib/components/LogoutButton.svelte";
     import { enhance } from "$app/forms";
-    import type { PageData } from './$types';
-    import type { ActionData } from "./createList/$types";
-    
-    let { data, form }: { data: PageData, form: ActionData | null } = $props();
+
+    let { data, form } = $props();
 </script>
 
 
 <div id="back">
     <div id="front">
         <div id="settingsPanel">
-            <h4 style="width: 50%; float: left; margin-left: 5%;">{data.user?.username ?? ''}</h4>
+            <h4 style="width: 50%; float: left; margin-left: 5%;">{data.user.username}</h4>
             <LogoutButton></LogoutButton>
         </div>
         <div id="userPanel">

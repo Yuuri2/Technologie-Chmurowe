@@ -1,15 +1,27 @@
 <script lang="ts">
-    import { redirect } from "@sveltejs/kit";
+    import { goto } from "$app/navigation";
+    
     let { data } = $props();
 
-    let productList = $derived.by(() =>{
-        
-    })
+    //pobieram dane do listy
+    let listResult = $state(data.dbListResult);
+    let productList = $state(data.dbProducts);
 
+    //powrót do listy list
     function seeHome(){
-    redirect(300, '/home');
+        goto('/home');
     }
 
+    //szuka nazwy produktu o id productId
+    function associateProduct(productId: number){
+        return productList.find(el => el.id === productId).name;
+    }
+
+    //update list przy zmianie na stronie
+    $effect(() => {
+        productList = data.dbProducts;
+        listResult = data.dbListResult;
+    })
 </script>
 
 <div id="settingsPanel">
@@ -32,17 +44,17 @@
         </button>
     </div>
     <div id="productPanel">
-        <!-- {#each productList as product, i (product.globalIndex)}
+        {#each listResult as listRow, i (listRow.id)}
             <div
-                class="productRow {selectedRowIndex === product.globalIndex ? 'selected' : ''}"
-                onclick={() => toggleProduct(product.globalIndex)}
+                class="productRow"
+                onclick={() => toggleProduct(listRow.id)}
             >
                 <span class="prodId">#{i + 1}</span>
-                <span class="prodName">{product.productName}</span>
-                <span class="prodQty">x{product.quantity}</span>
+                <span class="prodName">{associateProduct(listRow.product)}</span>
+                <span class="prodQty">x{listRow.quantity}</span>
             </div>
         {:else}
             <p style="color: #aaa; margin-top: 20px;">No products on your list.</p>
-        {/each} -->
+        {/each}
     </div>
 </div>

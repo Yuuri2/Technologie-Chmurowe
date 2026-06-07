@@ -1,6 +1,7 @@
 <script lang="ts">
     import LogoutButton from "$lib/components/LogoutButton.svelte";
     import { enhance } from "$app/forms";
+    import { goto } from "$app/navigation";
 
     let { data, form } = $props();
 </script>
@@ -9,25 +10,26 @@
 <div id="back">
     <div id="front">
         <div id="settingsPanel">
-            <h4 style="width: 50%; float: left; margin-left: 5%;">{data.user.username}</h4>
+            <h4 style="width: 50%; float: left; margin-left: 5%; height: 100%;">{data.user.username}</h4>
             <LogoutButton></LogoutButton>
         </div>
         <div id="userPanel">
-            <form method="POST" action="?/create" use:enhance>
-                <input type="text" class="UIInput" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px; font-size:large;" name="nazwa" id="nazwa">
-                <button type="submit" class="UIButton" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px;"><b>+ Create New List</b></button>
-                {#if form?.error}
-                    <p style="color: red;" >{form.error}</p>
-                {/if}
-            </form>
+            <div id="controllPanel">
+                <form method="POST" action="?/create" use:enhance>
+                    <input type="text" class="UIInput" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px; font-size:large;" name="nazwa" id="nazwa">
+                    <button type="submit" class="UIButton" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px;"><b>+ Create New List</b></button>
+                    {#if form?.error}
+                        <p style="color: red;" >{form.error}</p>
+                    {/if}
+                </form>
+            </div>
             <div class="listGrid">
                 {#each data.lists as list }
-                    <div class="listSquare">
+                    <div class="listSquare" onclick={() =>( goto(`/products/${list.id}`)) }>
                         <h4>{list.nazwa}</h4>
-                        <a href={`/products/${list.id}`}>Select</a>
                         <form action="?/delete" method="POST" use:enhance>
                             <input type="hidden" name="id" value={list.id}>
-                            <button type="submit">X</button>
+                            <button type="submit" style="background-color: #a62443; width: 30%; height: 30%;"><b>X</b></button>
                         </form>
                     </div>
                 {:else}

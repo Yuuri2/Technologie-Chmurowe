@@ -17,8 +17,8 @@
             <input type="password" name="password" class="UIInput" required minlength="3">
             
             <b>Confirm Password: </b>
-            <input type="password" name="password" class="UIInput" required minlength="3">
-            <button type="submit" name="pswdCheck" class="UIButton SubmitBtn">Submit</button>
+            <input type="password" name="pswdCheck" class="UIInput" required minlength="3">
+            <button type="submit" class="UIButton SubmitBtn">Submit</button>
             <button type="button" class="UIButton" onclick={() => goto('/')}>← Go back</button>
         </form>
     </div>

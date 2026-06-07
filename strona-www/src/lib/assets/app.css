@@ -1,0 +1,67 @@
+:global(body){
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    color: black;
+    font-family: sans-serif;
+}
+
+#back{
+    background-color: #b9b9b9;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+}
+#front{
+    width: 60%;
+    height: 100%;
+    background-color: #ffffff;
+    padding: 20px;
+    box-sizing: border-box;
+    border-radius: 25px;
+    border: 2px solid black;
+}
+
+#frontPageSign{
+    width: 100%;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+}
+#SignInBtnContainer{
+    width: 100%;
+    height: 60%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.UIButton{
+    width: 30%;
+    height: 10%;
+    margin: 10px;
+    background-color: white;
+    border-radius: 25px;
+    border: 2px solid black;
+    transition: width 0.2s ease-in-out, height 0.2s ease-in-out;
+}
+.SubmitBtn {
+    margin-top: 20px;
+    background-color: #73AD21;
+    color: white;
+    border: none;
+}
+
+.UIButton:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.UIInput {
+    width: 50%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #cecece;
+    border-radius: 5px;
+}

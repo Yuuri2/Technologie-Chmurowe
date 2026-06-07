@@ -8,6 +8,7 @@ export const actions: Actions = {
         const data = await request.formData();
         const username = data.get('username')?.toString().trim();
         const password = data.get('password')?.toString();
+        const pswdCheck = data.get('pswdCheck')?.toString();
 
         if(!username || !password){
             return fail(400, {error: "login i haslo jest wymagane"});
@@ -17,6 +18,9 @@ export const actions: Actions = {
         }
         if(password.length < 3){
             return fail(400, {error: "haslo za krótkie"});
+        }
+        if(password !== pswdCheck){
+            return fail(400, {error: "hasła nie są indentyczne"});
         }
 
         try {

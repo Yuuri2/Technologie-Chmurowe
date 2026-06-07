@@ -1,4 +1,16 @@
+<script>
+    import { goto } from "$app/navigation";
 
-<h1>lista zakupów</h1>
-<a href="/login">Login</a><br>
-<a href="/register">Rejestracja</a>
+</script>
+
+<div id="back">
+    <div id="front">
+        <div id="frontPageSign">
+            <h1>Shopping list Center version 1.3</h1>
+        </div>
+        <div id="SignInBtnContainer">
+            <button class="UIButton" onclick={() => goto('/login')}>Log In</button>
+            <button class="UIButton" onclick={() => goto('/register')}>Register</button>
+        </div>
+    </div>
+</div>

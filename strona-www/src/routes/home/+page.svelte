@@ -16,8 +16,8 @@
         <div id="userPanel">
             <div id="controllPanel">
                 <form method="POST" action="?/create" use:enhance>
-                    <input type="text" class="UIInput" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px; font-size:large;" name="nazwa" id="nazwa">
-                    <button type="submit" class="UIButton" style="background-color: #a2f2b8; height: 100%; width: 20%; border-radius: 10px;"><b>+ Create New List</b></button>
+                    <input type="text" class="ListInput" name="nazwa" id="nazwa">
+                    <button type="submit" class="ListCreationBtn"><b>+ Create New List</b></button>
                     {#if form?.error}
                         <p style="color: red;" >{form.error}</p>
                     {/if}
@@ -27,9 +27,9 @@
                 {#each data.lists as list }
                     <div class="listSquare" onclick={() =>( goto(`/products/${list.id}`)) }>
                         <h4>{list.nazwa}</h4>
-                        <form action="?/delete" method="POST" use:enhance>
+                        <form action="?/delete" style="background-color: #a62443; width: 30%; height: 30%" method="POST" use:enhance >
                             <input type="hidden" name="id" value={list.id}>
-                            <button type="submit" style="background-color: #a62443; width: 30%; height: 30%;"><b>X</b></button>
+                            <button type="submit""><b>X</b></button>
                         </form>
                     </div>
                 {:else}

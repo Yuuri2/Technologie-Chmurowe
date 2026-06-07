@@ -5,21 +5,14 @@
 
     //pobieram dane do listy
     let listResult = $state(data.dbListResult);
-    let productList = $state(data.dbProducts);
 
     //powrót do listy list
     function seeHome(){
         goto('/home');
     }
 
-    //szuka nazwy produktu o id productId
-    function associateProduct(productId: number){
-        return productList.find(el => el.id === productId).name;
-    }
-
     //update list przy zmianie na stronie
     $effect(() => {
-        productList = data.dbProducts;
         listResult = data.dbListResult;
     })
 </script>
@@ -50,7 +43,7 @@
                 onclick={() => toggleProduct(listRow.id)}
             >
                 <span class="prodId">#{i + 1}</span>
-                <span class="prodName">{associateProduct(listRow.product)}</span>
+                <span class="prodName">{listRow.nazwa}</span>
                 <span class="prodQty">x{listRow.quantity}</span>
             </div>
         {:else}

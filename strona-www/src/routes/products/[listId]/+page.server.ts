@@ -6,11 +6,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
     const list = params.listId;
     const user = requireAuth(locals);
     try {
-        const listResult = await pool.query('SELECT * FROM lists WHERE owner = $1 AND list = $2',[locals.user , list]);
-        const productsResult = await pool.query('SELECT * FROM products');
+        const listResult = await pool.query('SELECT * FROM product WHERE ist_id = $2 JOIN',[list]);
 
         return {
-            dbProducts: productsResult.rows,
             dbListResult: listResult.rows,
             user: user
         };

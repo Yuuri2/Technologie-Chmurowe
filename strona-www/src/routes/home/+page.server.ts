@@ -7,6 +7,7 @@ import { fail } from "@sveltejs/kit";
 export const load: PageServerLoad = async ({ locals }) => {
     const user = requireAuth(locals);
     return {
+        user: user,
         lists: await getUsersLists(user.id)
     }
 }

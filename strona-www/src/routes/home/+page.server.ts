@@ -4,7 +4,4 @@ import { requireAuth } from "$lib/server/guard";
 
 export const load: PageServerLoad = async ({ locals }) => {
     const user = requireAuth(locals);
-    return {
-        user: user
-    }
 }

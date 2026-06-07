@@ -13,6 +13,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
             user: user
         };
     } catch (error) {
-        return { dbProducts: [], dbListResult: [] };
+        return {
+            dbListResult: [],
+            user: user
+         };
     }
 };

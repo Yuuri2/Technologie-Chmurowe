@@ -1,6 +1,8 @@
 import type { PageServerLoad } from './$types';
 import { pool } from '$lib/server/database/pool';
 import { requireAuth } from "$lib/server/guard";
+import type { Action } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
     const list = params.listId;
@@ -25,3 +27,17 @@ export const load: PageServerLoad = async ({ locals, params }) => {
          };
     }
 };
+
+export const actions: Action = {
+    addProduct: async ({request, params, locals}) => {
+        
+    },
+    editProduct: async ({}) => {
+
+    },
+
+    deleteProduct: async ({}) => {
+        
+    }
+
+}

@@ -73,7 +73,7 @@
             <div id="productPanel">
                 {#each listResult as listRow, i (listRow.id)}
                     <div
-                        class="productRow {selectedRowIndex === listRow.id ? 'Selected' : ''}"
+                        class="productRow {selectedRowIndex === listRow.id ? 'selected' : ''}"
                         role="button"
                         tabindex="0"
                         onclick={() => toggleProduct(listRow.id)}

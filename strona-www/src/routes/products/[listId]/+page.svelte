@@ -44,13 +44,13 @@
     <div id="front">
         {#if !isAdding && !isEditing}
         <div id="settingsPanel">
-            <h4 style="width: 50%; float: left; margin-left: 5%;">{data.user.username}</h4>
-            <button style="float: right;" class="UIButton" onclick={() => goto('/home')}>Go back</button>
+            <h4 class="username">{data.user.username}</h4>
+            <button class="backButtonContainer" onclick={() => goto('/home')}>Go back</button>
         </div>
         <div id="userPanel">
             <div id="controllPanel">
                 <!-- Dodawanie -->
-                <button class="UIButton " style="background-color: #a2f2b8;" onclick={addModalOpened}>
+                <button class="contextButton" style="background-color: #a2f2b8;" onclick={addModalOpened}>
                     <b>+</b>
                 </button>
                 <!-- Usuwanie -->
@@ -59,14 +59,14 @@
                         selectedRowIndex = null;
                         await update();
                     };
-                }} style="display: inline;">
+                }} class="contextButton">
                     <input type="hidden" name="productId" value={selectedRowIndex} />
-                    <button type="submit" class="UIButton" style="background-color: #a62443;" disabled={selectedRowIndex === null}>
+                    <button type="submit" style="background-color: #a62443 width: 100%; height: 100%;" disabled={selectedRowIndex === null}>
                         <b>X</b>
                     </button>
                 </form>
                 <!-- Edycja -->
-                <button class="UIButton" style="background-color: #f7f3a1;" onclick={editModalOpened} disabled={selectedRowIndex === null}>
+                <button class="contextButton" style="background-color: #f7f3a1;" onclick={editModalOpened} disabled={selectedRowIndex === null}>
                     Edit
                 </button>
             </div>

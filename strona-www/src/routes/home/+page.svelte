@@ -10,12 +10,12 @@
 <div id="back">
     <div id="front">
         <div id="settingsPanel">
-            <h4 style="width: 50%; float: left; margin-left: 5%; height: 100%;">{data.user.username}</h4>
+            <h4 class="username">{data.user.username}</h4>
             <LogoutButton></LogoutButton>
         </div>
         <div id="userPanel">
             <div id="controllPanel">
-                <form method="POST" action="?/create" use:enhance>
+                <form method="POST" action="?/create" class="contexButtonsContainer" use:enhance>
                     <input type="text" class="ListInput" name="nazwa" id="nazwa">
                     <button type="submit" class="ListCreationBtn"><b>+ Create New List</b></button>
                     {#if form?.error}

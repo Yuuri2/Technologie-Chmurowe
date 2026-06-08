@@ -29,7 +29,7 @@ test.describe('Product page functions', () => {
     await expect(page.locator('.prodName').first()).toHaveText('Oat Milk');
 
     await page.locator('.productRow').first().click();
-    await page.getByRole('button', { name: 'X' }).click();
+    await page.locator('.productRow').first().getByRole('button', { name: 'X', exact: true }).click();
 
     await expect(page.locator('.productRow')).toHaveCount(0);
   });

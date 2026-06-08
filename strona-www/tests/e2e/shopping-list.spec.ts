@@ -8,12 +8,20 @@ test.describe('Product lists function', () => {
   });
 
   test('should add a new list and delete it', async ({ page }) => {
-    await page.fill('input[name="nazwa"]', 'lista');
+    // Tworzymy unikalną nazwę listy, np. "lista-1717882100"
+    const uniqueListName = `lista-${Date.now()}`;
+
+    await page.fill('input[name="nazwa"]', uniqueListName);
     await page.click('button:has-text("+ Create New List")');
 
-    await expect(page.locator('h4').first()).toHaveText('lista');
-await page.locator('.listSquare').first().getByRole('button', { name: 'X', exact: true }).click();
+    // 1. Sprawdzamy, czy nasza konkretna lista się pojawiła
+    const listCard = page.locator('.listSquare', { hasText: uniqueListName });
+    await expect(listCard).toBeVisible();
 
-    await expect(page.locator('.listSquare')).toHaveCount(0);
+    // 2. Klikamy przycisk "X" DOKŁADNIE wewnątrz naszej unikalnej listy
+    await listCard.getByRole('button', { name: 'X', exact: true }).click();
+
+    // 3. PANCERNA ASERCJA: Sprawdzamy, czy nasza lista zniknęła (ignorując inne śmieci w bazie)
+    await expect(listCard).toBeHidden();
   });
 });

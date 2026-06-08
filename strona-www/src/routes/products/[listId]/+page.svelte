@@ -44,8 +44,8 @@
     <div id="front">
         {#if !isAdding && !isEditing}
         <div id="settingsPanel">
-            <h4 class="username">{data.user.username}</h4>
-            <button class="backButtonContainer" onclick={() => goto('/home')}>Go back</button>
+            <div class="username"><h4>{data.user.username}</h4></div>
+            <div class="backButtonContainer"><button class="backButton" onclick={() => goto('/home')}>Go back</button></div>
         </div>
         <div id="userPanel">
             <div id="controllPanel">
@@ -61,7 +61,7 @@
                     };
                 }} class="contextButton">
                     <input type="hidden" name="productId" value={selectedRowIndex} />
-                    <button type="submit" style="background-color: #a62443 width: 100%; height: 100%;" disabled={selectedRowIndex === null}>
+                    <button type="submit" style="background-color: #a62443; width: 100%; height: 100%; border-radius: inherit;" disabled={selectedRowIndex === null}>
                         <b>X</b>
                     </button>
                 </form>

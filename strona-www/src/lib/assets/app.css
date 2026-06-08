@@ -186,6 +186,15 @@ body {
     float: right;
     padding-right: 5%;
 }
+.backButton{
+    height: 25%;
+    width: 20%;
+    margin: 10px;
+    border-radius: 25px;
+    border: 2px solid black;
+    float: right;
+    transition: width 0.2s ease-in-out, height 0.2s ease-in-out;
+}
 .contextButtonsContainer{
     width: 100%;
     height: 100%;
@@ -193,6 +202,7 @@ body {
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    gap: 10px;
 }
 .contextButton{
     width: 20%;

@@ -10,12 +10,12 @@
 <div id="back">
     <div id="front">
         <div id="settingsPanel">
-            <h4 class="username">{data.user.username}</h4>
+            <div class="username"><h4>{data.user.username}</h4></div>
             <LogoutButton></LogoutButton>
         </div>
         <div id="userPanel">
             <div id="controllPanel">
-                <form method="POST" action="?/create" class="contexButtonsContainer" use:enhance>
+                <form method="POST" action="?/create" class="contextButtonsContainer" use:enhance>
                     <input type="text" class="ListInput" name="nazwa" id="nazwa">
                     <button type="submit" class="ListCreationBtn"><b>+ Create New List</b></button>
                     {#if form?.error}
@@ -27,9 +27,9 @@
                 {#each data.lists as list }
                     <div class="listSquare" onclick={() =>( goto(`/products/${list.id}`)) }>
                         <h4>{list.nazwa}</h4>
-                        <form action="?/delete" style="width: 30%; height: 30%, border-radius 10px; border: 2px solid black" method="POST" use:enhance >
+                        <form action="?/delete" style="width: 30%; height: 30%; border-radius 10px; border: 2px solid black" method="POST" use:enhance >
                             <input type="hidden" name="id" value={list.id}>
-                            <button type="submit" style="background-color: #a62443, width: 100%; height: 100%"><b>X</b></button>
+                            <button type="submit" style="background-color: #a62443, width: 100%; height: 100%; border-radius: inherit;"><b>X</b></button>
                         </form>
                     </div>
                 {:else}

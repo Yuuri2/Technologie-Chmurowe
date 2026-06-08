@@ -2,7 +2,7 @@
     import { enhance } from "$app/forms";
 </script>
 <form method="POST" action="/logout" class="backButtonContainer" use:enhance>
-    <button style="float: right; height 80%;" class="UIButton">
+    <button class="backButton">
         Log out
     </button>
 </form>

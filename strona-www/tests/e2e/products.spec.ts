@@ -6,7 +6,6 @@ test.describe('Product page functions', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginUser(page);
-    // Każde uruchomienie testu dostaje swoją unikalną listę
     uniqueListName = `list-prod-${Date.now()}`;
     await createList(page, uniqueListName);
   });
@@ -36,19 +35,22 @@ test.describe('Product page functions', () => {
     await page.fill('input[name="quantity"]', '1');
     await page.getByRole('button', { name: 'Save' }).click();
 
+    // Czekamy na pełne przeładowanie danych
     await page.waitForLoadState('networkidle');
-
     await expect(page.locator('.prodName').first()).toHaveText('Oat Milk');
 
     // === USUWANIE PRODUKTU ===
-    await firstRow.click(); 
-
     const deleteButton = page.locator('#controllPanel').getByRole('button', { name: 'X', exact: false });
     
-    // 4. KLUCZOWA POPRAWKA: Czekamy nie tylko aż będzie widoczny, ale aż będzie WŁĄCZONY (czyli Svelte przetworzyło kliknięcie)
-    await expect(deleteButton).toBeEnabled({ timeout: 5000 });
+    // STRATEGIA ADAPTACYJNA:
+    // Jeśli Svelte zresetował stan i przycisk jest disabled -> klikamy bezpośrednio w tekst "Oat Milk".
+    // Jeśli stan przetrwał i wiersz jest zaznaczony -> pomijamy kliknięcie, żeby go przypadkowo nie ODZNACZYĆ.
+    if (await deleteButton.isDisabled()) {
+        await page.getByText('Oat Milk').click();
+    }
 
-    // 5. Dopiero teraz klikamy bezpiecznie
+    // Teraz przycisk na 100% musi być odblokowany
+    await expect(deleteButton).toBeEnabled({ timeout: 5000 });
     await deleteButton.click();
 
     // Wiersz powinien zniknąć

@@ -60,16 +60,16 @@ body {
 }
 
 .ListCreationBtn {
-    height: 100%; 
-    width: 40%; 
+    height: 50%; 
+    width: 10%; 
     border-radius: 10px; 
     background-color: #73AD21;
     border: 2px solid black;
     transition: width 0.2s ease-in-out, height 0.2s ease-in-out;
 }
 .ListInput{
-    height: 100%; 
-    width: 40%; 
+    height: 50%; 
+    width: 10%; 
     border-radius: 10px; 
     font-size:large;
     background-color: white;
@@ -178,6 +178,10 @@ body {
     height: 100%;
     float: left;
     padding-left: 5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
 }
 .backButtonContainer{
@@ -185,10 +189,14 @@ body {
     height: 100%;
     float: right;
     padding-right: 5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 .backButton{
-    height: 25%;
-    width: 20%;
+    height: 40%;
+    width: 30%;
     margin: 10px;
     border-radius: 25px;
     border: 2px solid black;
@@ -199,7 +207,7 @@ body {
     width: 100%;
     height: 100%;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 10px;
@@ -212,7 +220,7 @@ body {
     border: 2px solid black;
     transition: width 0.2s ease-in-out, height 0.2s ease-in-out;
 }
-.contextButton:hover{
+button:hover{
     transform: scale(1.1);
     cursor: pointer;
 }

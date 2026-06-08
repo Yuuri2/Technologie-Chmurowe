@@ -2,19 +2,22 @@ import { test, expect } from '@playwright/test';
 import { loginUser, createList } from './helpers';
 
 test.describe('Product page functions', () => {
+  let uniqueListName: string;
 
   test.beforeEach(async ({ page }) => {
     await loginUser(page);
-    await createList(page);
+    // Każde uruchomienie testu dostaje swoją unikalną listę
+    uniqueListName = `list-prod-${Date.now()}`;
+    await createList(page, uniqueListName);
   });
 
   test('Products can be added, edited and deleted', async ({ page }) => {
-    // Bezpieczne przejście do produktów z oczekiwaniem na załadowanie strony
-    await page.locator('.listSquare h4').first().click();
+    // Wejście do naszej unikalnej listy
+    await page.locator('.listSquare', { hasText: uniqueListName }).locator('h4').click();
     await page.waitForLoadState('networkidle'); 
     await expect(page).toHaveURL(/.*\/products.*/);
 
-    // Dodawanie produktu
+    // === DODAWANIE PRODUKTU ===
     await page.getByText('+', { exact: false }).click();
     await expect(page.locator('input[name="productName"]')).toBeVisible();
 
@@ -22,25 +25,34 @@ test.describe('Product page functions', () => {
     await page.fill('input[name="quantity"]', '2');
     await page.getByRole('button', { name: 'Save' }).click();
 
-    await expect(page.locator('.productRow').first()).toBeVisible();
+    const firstRow = page.locator('.productRow').first();
+    await expect(firstRow).toBeVisible();
 
-    // Edycja produktu
-    await page.locator('.productRow').first().click();
-    await page.getByRole('button', { name: 'Edit' }).click();
+    // === EDYCJA PRODUKTU ===
+    await firstRow.click(); 
+    await page.locator('#controllPanel').getByRole('button', { name: 'Edit' }).click();
+    
+    await expect(page.locator('input[name="productName"]')).toBeVisible();
     await page.fill('input[name="productName"]', 'Oat Milk');
     await page.fill('input[name="quantity"]', '1');
     await page.getByRole('button', { name: 'Save' }).click();
 
     await expect(page.locator('.prodName').first()).toHaveText('Oat Milk');
+
+    // === USUWANIE PRODUKTU ===
+    await firstRow.click(); 
     
-    const firstRow = page.locator('.productRow').first();
-    await firstRow.click();
-    const deleteButton = firstRow.getByRole('button', { name: 'X', exact: false });
-
+    const deleteButton = page.locator('#controllPanel').getByRole('button', { name: 'X', exact: false });
     await expect(deleteButton).toBeVisible({ timeout: 5000 });
-
     await deleteButton.click();
-
     await expect(firstRow).toBeHidden();
+
+    // === SPRZĄTANIE: Usuwamy całą listę, żeby nie śmiecić w bazie ===
+    await page.click('button:has-text("Go back")');
+    await page.waitForLoadState('networkidle');
+    
+    const listCard = page.locator('.listSquare', { hasText: uniqueListName });
+    await listCard.getByRole('button', { name: 'X', exact: true }).click();
+    await expect(listCard).toBeHidden();
   });
 });

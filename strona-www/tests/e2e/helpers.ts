@@ -13,11 +13,14 @@ export async function loginUser(page: Page) {
   await expect(page.locator('.username h3')).toBeVisible();
 }
 
-export async function createList(page:Page) {
-    await page.fill('input[name="nazwa"]', 'lista');
-    await page.click('button:has-text("+ Create New List")');
-    await expect(page.locator('h4:has-text("lista")').first()).toBeVisible();
-    await page.waitForLoadState('networkidle');
+export async function createList(page: Page, listName: string) {
+  await page.fill('input[name="nazwa"]', listName);
+  await page.click('button:has-text("+ Create New List")');
+  
+  const listCard = page.locator('.listSquare', { hasText: listName });
+  await expect(listCard).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  return listCard;
 }
 
 export async function deleteFirstList(page: Page) {

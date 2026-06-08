@@ -49,7 +49,7 @@
     <div id="front">
         {#if !isAdding && !isEditing}
         <div id="settingsPanel">
-            <div class="username"><h4 style="float: left;">{data.user.username}</h4></div>
+            <div class="username"><h3 style="float: left;">{data.user.username}</h3></div>
             <div class="backButtonContainer"><button class="backButton" onclick={() => goto('/home')}>Go back</button></div>
         </div>
         <div id="userPanel">

@@ -37,14 +37,22 @@ test.describe('Product page functions', () => {
     await page.fill('input[name="quantity"]', '1');
     await page.getByRole('button', { name: 'Save' }).click();
 
+    await page.waitForLoadState('networkidle');
+
     await expect(page.locator('.prodName').first()).toHaveText('Oat Milk');
 
     // === USUWANIE PRODUKTU ===
     await firstRow.click(); 
-    
+
     const deleteButton = page.locator('#controllPanel').getByRole('button', { name: 'X', exact: false });
-    await expect(deleteButton).toBeVisible({ timeout: 5000 });
+    
+    // 4. KLUCZOWA POPRAWKA: Czekamy nie tylko aż będzie widoczny, ale aż będzie WŁĄCZONY (czyli Svelte przetworzyło kliknięcie)
+    await expect(deleteButton).toBeEnabled({ timeout: 5000 });
+
+    // 5. Dopiero teraz klikamy bezpiecznie
     await deleteButton.click();
+
+    // Wiersz powinien zniknąć
     await expect(firstRow).toBeHidden();
 
     // === SPRZĄTANIE: Usuwamy całą listę, żeby nie śmiecić w bazie ===

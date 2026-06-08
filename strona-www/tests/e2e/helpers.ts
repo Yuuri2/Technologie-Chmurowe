@@ -10,7 +10,7 @@ export async function loginUser(page: Page) {
   await page.click('button:has-text("Login")');
   
   await expect(page).toHaveURL(/.*\/home/);
-  await expect(page.locator('h4')).toBeVisible();
+  await expect(page.locator('.username h3')).toBeVisible();
 }
 
 export async function createList(page:Page) {

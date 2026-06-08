@@ -9,8 +9,8 @@ test.describe('Product page functions', () => {
   });
 
   test('Products can be added, edited and deleted', async ({ page }) => {
-    await page.locator('.listSquare').first().click();
-
+    await page.locator('.listSquare h4').first().click();
+    await expect(page).toHaveURL(/.*\/products.*/);
     await page.getByRole('button', { name: '+', exact: true }).click();
     await expect(page.locator('input[name="productName"]')).toBeVisible();
 

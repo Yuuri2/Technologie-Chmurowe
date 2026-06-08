@@ -30,7 +30,12 @@
     }
     function editModalOpened(){
         if(selectedRowIndex){
-            isEditing = true;
+            const selectedProduct = listResult.find(element => element.id === selectedRowIndex);
+            if (selectedProduct) {
+                tempName = selectedProduct.nazwa;
+                tempQuant = selectedProduct.quantity;
+                isEditing = true;
+            }
         }
     }
 
@@ -90,13 +95,11 @@
         {:else if isAdding}
             <div class="modalOverlay">
                 <form method="POST" action="?/addProduct" use:enhance={() => {
-                    // Ta część wykonuje się PRZED wysłaniem (np. można tu włączyć loader)
                     return async ({ result, update }) => {
-                        // Ta część wykonuje się PO odpowiedzi z serwera
                         if (result.type === 'success') {
-                            isAdding = false; // Zamknij modal tylko, gdy sukces
+                            isAdding = false;
                         }
-                        await update(); // Odświeża dane na stronie (data.dbLists, itd.)
+                        await update();
                     };
                 }} class="modalBox">
                     <h2>Add New Product</h2>
@@ -112,8 +115,8 @@
                     </div>
 
                     <div class="modalActions">
-                        <button type="submit" class="UIButton modalBtn save">Save</button>
-                        <button type="button" class="UIButton modalBtn cancel" onclick={() => isAdding = false}>Cancel</button>
+                        <button type="submit" class="UIButton">Save</button>
+                        <button type="button" class="UIButton" onclick={() => isAdding = false}>Cancel</button>
                     </div>
                 </form>
             </div>
@@ -123,6 +126,8 @@
                     return async ({ result, update }) => {
                         if (result.type === 'success') {
                             isEditing = false;
+                            tempName = '';
+                            tempQuant = 1;
                         }
                         await update(); 
                     };
@@ -140,8 +145,8 @@
                     </div>
                     <input type="hidden" name="productId" value="{selectedRowIndex}">
                     <div class="modalActions">
-                        <button type="submit" class="UIButton modalBtn save">Save</button>
-                        <button type="button" class="UIButton modalBtn cancel" onclick={() => isEditing = false}>Cancel</button>
+                        <button type="submit" class="UIButton">Save</button>
+                        <button type="button" class="UIButton" onclick={() => {isEditing = false; tempName = ''; tempQuant = 1}}>Cancel</button>
                     </div>
                 </form>
             </div>

@@ -1,10 +1,12 @@
 
 # Technologie-Chmurowe 26L
-#### Projekt aplikacji wdrążonej na Microsoft Azure
+### Projekt aplikacji wdrążonej na Microsoft Azure
 
 **Członkowie zespołu:**
 *Adrian Torbus*
 *Dawid Pytel*
+
+### [Adres Strony <-----](https://tcwebapp-maszyna.azurewebsites.net)
 
 Projekt zakłada stworzenie działającej w chmurze aplikacji typu lista zakupów. Aplikacja zakłada następujące funkcjonalności:  
 - [x] logowanie się na konto używtkownika

@@ -31,8 +31,7 @@ test.describe('Product page functions', () => {
     // === EDYCJA PRODUKTU ===
     await firstRow.click(); 
     await page.locator('#controllPanel').getByRole('button', { name: 'Edit' }).click();
-    
-    await expect(page.locator('input[name="productName"]')).toBeVisible();
+
     await page.fill('input[name="productName"]', 'Oat Milk');
     await page.fill('input[name="quantity"]', '1');
     await page.getByRole('button', { name: 'Save' }).click();

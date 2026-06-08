@@ -128,6 +128,7 @@
                             isEditing = false;
                             tempName = '';
                             tempQuant = 1;
+                            selectedRowIndex = null;
                         }
                         await update(); 
                     };
@@ -146,7 +147,7 @@
                     <input type="hidden" name="productId" value={selectedRowIndex} />
                     <div class="modalActions">
                         <button type="submit" class="UIButton">Save</button>
-                        <button type="button" class="UIButton" onclick={() => {isEditing = false; tempName = ''; tempQuant = 1}}>Cancel</button>
+                        <button type="button" class="UIButton" onclick={() => {isEditing = false; tempName = ''; tempQuant = 1; selectedRowIndex = null}}>Cancel</button>
                     </div>
                 </form>
             </div>

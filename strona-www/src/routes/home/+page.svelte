@@ -10,7 +10,7 @@
 <div id="back">
     <div id="front">
         <div id="settingsPanel">
-            <div class="username"><h4>{data.user.username}</h4></div>
+            <div class="username"><h4 style="float: left;">{data.user.username}</h4></div>
             <LogoutButton></LogoutButton>
         </div>
         <div id="userPanel">

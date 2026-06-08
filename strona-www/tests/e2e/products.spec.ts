@@ -32,13 +32,15 @@ test.describe('Product page functions', () => {
     await page.getByRole('button', { name: 'Save' }).click();
 
     await expect(page.locator('.prodName').first()).toHaveText('Oat Milk');
-
-    // Usunięcie produktu - POPRAWKA SELEKTORA
-    // Szukamy elementu zawierającego tekst "X" lub "x" bezpośrednio w pierwszym wierszu produktu
+    
     const firstRow = page.locator('.productRow').first();
-    await firstRow.locator('button, [role="button"]').filter({ hasText: /X/i }).click();
+    await firstRow.click();
+    const deleteButton = firstRow.getByRole('button', { name: 'X', exact: false });
 
-    // Sprawdzamy, czy wiersz zniknął
+    await expect(deleteButton).toBeVisible({ timeout: 5000 });
+
+    await deleteButton.click();
+
     await expect(firstRow).toBeHidden();
   });
 });

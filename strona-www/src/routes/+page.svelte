@@ -7,6 +7,7 @@
     <div id="front">
         <div id="frontPageSign">
             <h1>Shopping list Center v2.0</h1>
+            <h1>TEST</h1>
         </div>
         <div id="SignInBtnContainer">
             <button class="UIButton" onclick={() => goto('/login')}>Log In</button>
